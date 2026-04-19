@@ -49,13 +49,29 @@ sample dataset so first-time contributors see a populated UI immediately.
 
 ## Deploy
 
-Full end-to-end setup in **[docs/DEPLOY.md](docs/DEPLOY.md)**. Summary:
+First-time deployment takes about 25 minutes end-to-end, no credit card
+required. Click-by-click walkthrough in **[docs/DEPLOY.md](docs/DEPLOY.md)**,
+which covers:
 
-1. **Supabase** (free tier) → run `db/schema.sql`, copy the URL + keys.
-2. **Streamlit Cloud** → point at `alden_finder/app.py`, paste secrets.
-3. **GitHub Actions secrets** → `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
-   (required), plus optional `RESEND_API_KEY` / SMTP creds for alert emails.
-4. Trigger the first scrape from the Actions tab.
+1. **Fork + local smoke test** (5 min) — clone, install, run `streamlit` to
+   confirm the sample UI works.
+2. **Supabase setup** (5 min) — create a project, run `db/schema.sql` in
+   the SQL editor, copy the three API keys, seed the retailer registry
+   with a one-liner.
+3. **Streamlit Cloud deploy** (3 min) — New app, point at
+   `alden_finder/app.py`, paste two secrets.
+4. **GitHub Actions secrets + first scrape** (3 min) — add
+   `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` as repo secrets, enable
+   workflows, trigger the scrape manually.
+5. **Email alerts** (optional, 5 min) — Resend account + DNS verification
+   + four secret env vars. Skip this and the site still runs; subscribers
+   just see a clear "alerts not configured" notice.
+6. **Ongoing operations** — adding retailers, dealer opt-out, rescrapes,
+   troubleshooting.
+
+Cost model: **$0/month** at launch scale (Supabase free tier handles
+30x our storage needs; Streamlit Cloud is free for public apps; GitHub
+Actions are free for public repos; Resend free tier is 3,000 emails/month).
 
 ## Features
 

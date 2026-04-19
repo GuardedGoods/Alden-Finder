@@ -42,7 +42,7 @@ def render() -> None:
             {
                 "Retailer": r.get("name"),
                 "Country": r.get("country"),
-                "Active": "✅" if r.get("active") else "—",
+                "Active": "yes" if r.get("active") else "no",
                 "Adapter": r.get("adapter_key"),
                 "Last scrape": _age(r.get("last_scrape_finished_at")),
                 "Status": r.get("last_scrape_status") or "—",

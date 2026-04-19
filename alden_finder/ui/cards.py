@@ -10,13 +10,15 @@ from dateutil import parser as dateparser
 
 from alden_finder.core import fx
 
-_COUNTRY_FLAGS = {
-    "US": "🇺🇸", "CA": "🇨🇦", "GB": "🇬🇧", "IE": "🇮🇪", "FR": "🇫🇷", "DE": "🇩🇪",
-    "IT": "🇮🇹", "ES": "🇪🇸", "NL": "🇳🇱", "BE": "🇧🇪", "SE": "🇸🇪", "NO": "🇳🇴",
-    "CH": "🇨🇭", "AT": "🇦🇹", "DK": "🇩🇰", "FI": "🇫🇮", "JP": "🇯🇵", "KR": "🇰🇷",
-    "HK": "🇭🇰", "TW": "🇹🇼", "SG": "🇸🇬", "TH": "🇹🇭", "PH": "🇵🇭", "ID": "🇮🇩",
-    "MY": "🇲🇾", "CN": "🇨🇳", "AU": "🇦🇺", "NZ": "🇳🇿",
-}
+
+def _country_badge(code: str | None) -> str:
+    if not code:
+        return ""
+    return (
+        f'<span style="display:inline-block;font-size:0.7rem;padding:1px 6px;'
+        f'border:1px solid rgba(120,120,120,0.35);border-radius:4px;'
+        f'margin-right:4px;opacity:0.8">{html.escape(code.upper())}</span>'
+    )
 
 
 def _parse(ts: str | None) -> datetime | None:
@@ -68,7 +70,7 @@ def render_card(product: dict, display_ccy: str) -> None:
     else:
         price_label = fx.format_price(price_minor, product.get("currency") or display_ccy)
 
-    flag = _COUNTRY_FLAGS.get(retailer.get("country") or "", "")
+    country_badge = _country_badge(retailer.get("country"))
     last_scrape = _parse(retailer.get("last_scrape_finished_at"))
     badge = freshness_badge(last_scrape)
 
@@ -98,7 +100,7 @@ def render_card(product: dict, display_ccy: str) -> None:
     ) if b]
     meta = " · ".join(meta_bits)
 
-    retailer_line = f"{flag} {html.escape(retailer.get('name') or '')} {badge}"
+    retailer_line = f"{country_badge}{html.escape(retailer.get('name') or '')} {badge}"
 
     st.markdown(
         f"""
@@ -111,7 +113,7 @@ def render_card(product: dict, display_ccy: str) -> None:
           <div class="af-price">{price_label}</div>
           <div class="af-retailer">{retailer_line}</div>
           <a class="af-buy" href="{html.escape(url)}" target="_blank" rel="noopener">
-            Buy at {html.escape(retailer.get('name') or 'retailer')} →
+            Buy at {html.escape(retailer.get('name') or 'retailer')}
           </a>
         </div>
         """,

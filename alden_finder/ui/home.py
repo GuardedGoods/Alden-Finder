@@ -12,7 +12,7 @@ def render_new_arrivals(display_ccy: str, limit: int = 6) -> None:
     rows = db.get_new_arrivals(days=7, limit=limit)
     if not rows:
         return
-    st.subheader(f"🆕 Just in — last 7 days ({len(rows)})")
+    st.subheader(f"Just in — last 7 days ({len(rows)})")
     cols = st.columns(min(len(rows), 3))
     for slot, prod in zip(cols, rows, strict=False):
         with slot:

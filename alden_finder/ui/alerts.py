@@ -18,7 +18,7 @@ _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 def render(current_spec: FilterSpec) -> None:
-    with st.expander("🔔 Notify me when matching Alden comes in stock", expanded=False):
+    with st.expander("Notify me when matching Alden comes in stock", expanded=False):
         st.caption(
             "We'll email you when a product matching your current filters appears. "
             "One click to unsubscribe (link in every email). Alerts require a configured "

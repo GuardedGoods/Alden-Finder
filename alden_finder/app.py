@@ -12,7 +12,6 @@ _VIEWS = ("search", "status", "guide", "about")
 
 st.set_page_config(
     page_title="Alden Finder",
-    page_icon="👞",
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
