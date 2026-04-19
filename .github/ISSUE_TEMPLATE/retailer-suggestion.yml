@@ -1,0 +1,69 @@
+name: Retailer suggestion
+description: Suggest a new Alden retailer for the registry, or report a broken one.
+title: "[Retailer] "
+labels: ["retailer"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping expand the retailer list! Fill in what you know — we can look up the rest.
+
+  - type: input
+    id: name
+    attributes:
+      label: Retailer name
+      placeholder: e.g. Cappelletto Shop
+    validations:
+      required: true
+
+  - type: input
+    id: url
+    attributes:
+      label: Website URL (Alden collection page preferred)
+      placeholder: https://example.com/collections/alden
+    validations:
+      required: true
+
+  - type: input
+    id: country
+    attributes:
+      label: Country (ISO-3166 alpha-2)
+      placeholder: "IT"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: source_type
+    attributes:
+      label: Source type
+      options:
+        - authorized
+        - seconds
+        - mto
+        - resale
+      default: 0
+    validations:
+      required: true
+
+  - type: input
+    id: ships_to
+    attributes:
+      label: Ships to (comma-separated ISO-2 codes)
+      placeholder: "IT, DE, FR, GB"
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      placeholder: MTO program details, shell cordovan availability, shipping restrictions, etc.
+
+  - type: dropdown
+    id: optout
+    attributes:
+      label: Is this a dealer opt-out request?
+      options:
+        - "No — add/update this retailer"
+        - "Yes — please remove this retailer from scraping"
+      default: 0
+    validations:
+      required: true

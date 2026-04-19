@@ -5,8 +5,10 @@ from __future__ import annotations
 import streamlit as st
 
 from alden_finder.core import db
-from alden_finder.ui import cards, filters, status
+from alden_finder.ui import cards, filters, guide, status
 from alden_finder.ui.style import CSS
+
+_VIEWS = ("search", "status", "guide", "about")
 
 st.set_page_config(
     page_title="Alden Finder",
@@ -36,8 +38,8 @@ with cols[0]:
 with cols[1]:
     view_choice = st.radio(
         "View",
-        ["search", "status", "about"],
-        index=["search", "status", "about"].index(tab) if tab in {"search", "status", "about"} else 0,
+        _VIEWS,
+        index=_VIEWS.index(tab) if tab in _VIEWS else 0,
         horizontal=True,
         label_visibility="collapsed",
     )
@@ -48,6 +50,8 @@ if view_choice != tab:
 
 if tab == "status":
     status.render()
+elif tab == "guide":
+    guide.render()
 elif tab == "about":
     st.markdown(
         """
@@ -71,7 +75,9 @@ flip the `active` flag and stop scraping immediately.
 authorization can change at any time; the official Alden dealer list at
 <https://www.aldenshoe.com> is the source of truth.
 
-**Contribute a retailer.** Open a PR editing `data/retailers.yaml`.
+**Contribute a retailer.** [Open a suggestion issue](https://github.com/guardedgoods/alden-finder/issues/new?template=retailer-suggestion.yml) or PR [`data/retailers.yaml`](https://github.com/guardedgoods/alden-finder/blob/main/data/retailers.yaml) directly.
+
+**Dealer opt-out.** Email via a GitHub issue and we'll flip `active: false` on the next scheduled run.
         """
     )
 else:
