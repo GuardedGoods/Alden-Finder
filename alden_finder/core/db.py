@@ -143,16 +143,34 @@ def upsert_retailer(retailer: Retailer) -> int:
     return res.data[0]["id"]
 
 
+def _dedupe_batch(products: list[dict]) -> list[dict]:
+    """Collapse rows that share (retailer_id, retailer_sku), keeping the last.
+
+    Supabase's upsert compiles to a single INSERT ... ON CONFLICT statement
+    which Postgres rejects if the same conflict target appears twice in the
+    same statement (cardinality_violation). Shopify variants legitimately
+    share a product URL, so the adapter may yield the same product key
+    within one batch — dedupe before sending.
+    """
+    dedup: dict[tuple, dict] = {}
+    for p in products:
+        sku = p.get("retailer_sku") or ""
+        key = (p.get("retailer_id"), sku)
+        dedup[key] = p
+    return list(dedup.values())
+
+
 def upsert_products(products: list[dict]) -> int:
-    """Upsert products by (retailer_id, url). Returns count upserted."""
+    """Upsert products by (retailer_id, retailer_sku). Returns count upserted."""
     if not products:
         return 0
+    products = _dedupe_batch(products)
     client = _client()
     if client is None:
-        existing = {(p["retailer_id"], p["url"]): p for p in _SAMPLE_PRODUCTS}
+        existing = {(p["retailer_id"], p.get("retailer_sku")): p for p in _SAMPLE_PRODUCTS}
         now = datetime.now(UTC).isoformat()
         for p in products:
-            key = (p["retailer_id"], p["url"])
+            key = (p["retailer_id"], p.get("retailer_sku"))
             p.setdefault("first_seen_at", now)
             p["last_seen_at"] = now
             p["last_checked_at"] = now
@@ -162,20 +180,29 @@ def upsert_products(products: list[dict]) -> int:
                 p["id"] = max((x["id"] for x in _SAMPLE_PRODUCTS), default=0) + 1
                 _SAMPLE_PRODUCTS.append(p)
         return len(products)
-    res = client.table("products").upsert(products, on_conflict="retailer_id,url").execute()
+    res = client.table("products").upsert(
+        products, on_conflict="retailer_id,retailer_sku"
+    ).execute()
     return len(res.data or [])
 
 
-def mark_products_unseen(retailer_id: int, keep_urls: set[str]) -> None:
-    """Flip stock_state to out_of_stock for products not in keep_urls this run."""
+def mark_products_unseen(retailer_id: int, keep_skus: set[str]) -> None:
+    """Flip stock_state to out_of_stock for products not in keep_skus this run."""
     client = _client()
     if client is None:
         for p in _SAMPLE_PRODUCTS:
-            if p["retailer_id"] == retailer_id and p["url"] not in keep_urls:
+            if p["retailer_id"] == retailer_id and p.get("retailer_sku") not in keep_skus:
                 p["stock_state"] = "out_of_stock"
         return
-    rows = client.table("products").select("id,url").eq("retailer_id", retailer_id).execute().data or []
-    stale = [r["id"] for r in rows if r["url"] not in keep_urls]
+    rows = (
+        client.table("products")
+        .select("id,retailer_sku")
+        .eq("retailer_id", retailer_id)
+        .execute()
+        .data
+        or []
+    )
+    stale = [r["id"] for r in rows if r.get("retailer_sku") not in keep_skus]
     if stale:
         client.table("products").update({"stock_state": "out_of_stock"}).in_("id", stale).execute()
 

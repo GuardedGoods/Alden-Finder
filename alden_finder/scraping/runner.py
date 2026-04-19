@@ -110,22 +110,22 @@ async def _scrape_one(entry: dict, client: httpx.AsyncClient, limiter: _DomainLi
     count = 0
     status = "ok"
     error: str | None = None
-    seen_urls: set[str] = set()
+    seen_skus: set[str] = set()
     try:
         await limiter.wait(host, entry["rate_limit_s"])
         products_batch: list[dict] = []
         async for product in adapter.fetch():
-            seen_urls.add(product["url"])
+            sku = product.get("retailer_sku")
+            if sku:
+                seen_skus.add(sku)
             products_batch.append(product)
             if len(products_batch) >= 50:
-                db.upsert_products(products_batch)
-                count += len(products_batch)
+                count += db.upsert_products(products_batch)
                 products_batch = []
                 await limiter.wait(host, entry["rate_limit_s"])
         if products_batch:
-            db.upsert_products(products_batch)
-            count += len(products_batch)
-        db.mark_products_unseen(entry["id"], seen_urls)
+            count += db.upsert_products(products_batch)
+        db.mark_products_unseen(entry["id"], seen_skus)
         if count == 0:
             status = "partial"
             error = "no products parsed"

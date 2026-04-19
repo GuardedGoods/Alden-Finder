@@ -48,7 +48,7 @@ create index if not exists idx_runs_retailer_started on scrape_runs(retailer_id,
 create table if not exists products (
   id                 bigserial primary key,
   retailer_id        bigint not null references retailers(id) on delete cascade,
-  retailer_sku       text,
+  retailer_sku       text not null,
   url                text not null,
   image_url          text,
   model_number       text,
@@ -70,7 +70,7 @@ create table if not exists products (
   first_seen_at      timestamptz not null default now(),
   last_seen_at       timestamptz not null default now(),
   last_checked_at    timestamptz not null default now(),
-  unique (retailer_id, url)
+  unique (retailer_id, retailer_sku)
 );
 
 create index if not exists idx_products_last     on products(last_name);

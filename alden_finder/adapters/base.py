@@ -61,9 +61,13 @@ class RetailerAdapter(ABC):
             stock_state
             or (StockState.IN_STOCK if in_stock else StockState.OUT_OF_STOCK)
         )
+        # retailer_sku is the upsert conflict key and must be non-empty.
+        # Adapters that can't distinguish variants fall back to the URL,
+        # which gives one row per product listing.
+        sku = (retailer_sku or "").strip() or url
         return {
             "retailer_id": self.retailer["id"],
-            "retailer_sku": retailer_sku,
+            "retailer_sku": sku,
             "url": url,
             "image_url": image_url,
             "title_raw": title.strip(),
@@ -97,11 +101,16 @@ class ShopifyAdapter(RetailerAdapter):
         url = f"{self.base_url}/collections/{slug}/products.json?limit=250"
         try:
             r = await self.client.get(url)
-            if r.status_code == 200 and "products" in r.text:
-                return r.json().get("products") or []
         except httpx.HTTPError as e:
             log.debug("Shopify %s %s: %s", self.retailer.get("name"), slug, e)
-        return None
+            return None
+        if r.status_code != 200 or "products" not in r.text:
+            return None
+        try:
+            return r.json().get("products") or []
+        except (ValueError, KeyError) as e:
+            log.debug("Shopify %s %s: non-JSON body (%s)", self.retailer.get("name"), slug, e)
+            return None
 
     async def _all_alden_products(self) -> list[dict]:
         for slug in _ALDEN_COLLECTIONS:
@@ -111,15 +120,18 @@ class ShopifyAdapter(RetailerAdapter):
         # Fallback: site-wide /products.json with a title filter.
         try:
             r = await self.client.get(f"{self.base_url}/products.json?limit=250")
-            if r.status_code == 200:
-                return [
-                    p
-                    for p in (r.json().get("products") or [])
-                    if "alden" in (p.get("title", "") + " " + (p.get("vendor") or "")).lower()
-                ]
         except httpx.HTTPError:
-            pass
-        return []
+            return []
+        if r.status_code != 200:
+            return []
+        try:
+            all_products = r.json().get("products") or []
+        except (ValueError, KeyError):
+            return []
+        return [
+            p for p in all_products
+            if "alden" in (p.get("title", "") + " " + (p.get("vendor") or "")).lower()
+        ]
 
     async def fetch(self) -> AsyncIterator[dict]:
         products = await self._all_alden_products()
@@ -135,13 +147,17 @@ class ShopifyAdapter(RetailerAdapter):
                 variant_title = variant.get("title") or ""
                 price_f = float(variant.get("price") or 0)
                 available = bool(variant.get("available", True))
+                # Shopify variants always have an id; sku is optional. Fall
+                # back to id so retailer_sku is never empty (schema enforces
+                # NOT NULL, and the upsert conflict key needs it).
+                sku = str(variant.get("sku") or variant.get("id") or f"{handle}::{variant_title or 'default'}")
                 yield self.make_product(
                     url=url,
                     title=title,
                     image_url=image,
                     price_minor=round(price_f * 100) if price_f else None,
                     in_stock=available,
-                    retailer_sku=str(variant.get("sku") or variant.get("id") or ""),
+                    retailer_sku=sku,
                     body=body_html,
                     variant=variant_title,
                 )
