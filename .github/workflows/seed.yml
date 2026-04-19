@@ -1,0 +1,37 @@
+name: Seed retailers
+
+# Populates the `retailers` table in Supabase from data/retailers.yaml. Safe
+# to re-run — rows are upserted by name. Use this when you want to apply a
+# retailers.yaml edit without waiting for the hourly scrape.
+#
+# Prerequisite: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set as
+# repository secrets (Settings -> Secrets and variables -> Actions).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+      - name: Check Supabase reachability
+        run: python -m alden_finder.scripts.check_supabase
+      - name: Seed retailers
+        run: |
+          python -c "from alden_finder.scraping.runner import load_registry, sync_registry_to_db; print(f'Seeded {len(sync_registry_to_db(load_registry()))} retailers')"

@@ -118,8 +118,32 @@ row-level security and would let anyone read subscriber emails if leaked.
 
 ### Step 2c — Seed the retailer list
 
-From your terminal (where you're still inside the repo and the venv is
-active):
+You have two ways to do this. Pick whichever is easiest.
+
+#### Option A (no terminal needed) — run the Seed workflow
+
+1. First time only: add two repository secrets. In your fork, go to
+   **Settings → Secrets and variables → Actions → New repository secret**.
+   Add each of these (you'll reuse them in step 4):
+
+   | Name                         | Value                        |
+   |------------------------------|------------------------------|
+   | `SUPABASE_URL`               | Your Project URL.            |
+   | `SUPABASE_SERVICE_ROLE_KEY`  | The `service_role` key.      |
+
+2. Click the **Actions** tab of your fork. If you see the
+   *"Workflows aren't being run on this forked repository"* banner, click
+   **I understand my workflows, go ahead and enable them**.
+3. In the left sidebar, click **Seed retailers**.
+4. Top right: **Run workflow → Run workflow** (green button).
+5. The run appears after ~10 s. Click into it, then into the `seed` job.
+   You should see the check step report `OK` for every table, followed by
+   `Seeded 66 retailers`.
+
+#### Option B — from your terminal
+
+Only needed if you want to run it locally. Inside the repo with the venv
+active:
 
 ```bash
 export SUPABASE_URL='<paste your project URL>'
@@ -132,8 +156,10 @@ python -c "from alden_finder.scraping.runner import load_registry, sync_registry
 
 Expected output: `Seeded 66 retailers`.
 
-Verify in Supabase: **Table Editor → retailers**. You should see 66 rows
-across 20 countries.
+#### Verify
+
+In Supabase: **Table Editor → retailers** (make sure the schema dropdown
+is set to `public`). You should see 66 rows across 20 countries.
 
 ---
 
