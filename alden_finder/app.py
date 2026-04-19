@@ -5,7 +5,7 @@ from __future__ import annotations
 import streamlit as st
 
 from alden_finder.core import db
-from alden_finder.ui import cards, filters, guide, status
+from alden_finder.ui import alerts, cards, filters, guide, home, status
 from alden_finder.ui.style import CSS
 
 _VIEWS = ("search", "status", "guide", "about")
@@ -82,9 +82,12 @@ authorization can change at any time; the official Alden dealer list at
     )
 else:
     spec = filters.render()
+    home.render_new_arrivals(display_ccy=spec.display_currency, limit=6)
     products = db.search(spec, limit=240)
     st.markdown(f"**{len(products)}** matching listings")
     cards.render_grid(products, display_ccy=spec.display_currency, cols=3)
+    alerts.render(spec)
+    home.render_just_sold_out(display_ccy=spec.display_currency, limit=4)
 
 st.divider()
 st.caption(

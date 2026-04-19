@@ -6,23 +6,69 @@
 # `fit_notes` are shown in the sizing helper panel.
 - name: Barrie
   aliases: [barrie]
-  models: ["975", "9751", "9752", "9754", "990", "9901", "99016", "29334H", "D6805", "D8810H"]
-  fit_notes: Generally sized 0.5 size large of Brannock; wider forefoot.
+  # Plain-toe bluchers, longwings, NST bluchers, unstructured boots live here.
+  models:
+    - "975"         # Longwing Blucher, color 8 shell
+    - "9751"        # LWB, cigar shell
+    - "9752"        # LWB, whiskey shell
+    - "9754"        # LWB, ravello shell
+    - "97755"       # LWB variants
+    - "990"         # Plain-toe Blucher, calfskin
+    - "9901"        # PTB, burgundy calf
+    - "9906"        # PTB, suede
+    - "99016"       # PTB, color 8 shell
+    - "D4516H"      # PTB chromexcel
+    - "D8810H"      # PTB shell color 8
+    - "D9995H"      # Tanker boot
+    - "4508H"       # Unlined chukka
+    - "4515H"       # Suede chukka
+    - "D9910H"      # Indy-adjacent Barrie boots
+    - "29334H"      # PTB variant
+  fit_notes: Generally sized 0.5 size large of Brannock; wider forefoot. The most common Alden last.
 - name: Trubalance
   aliases: [trubalance, tru balance, "tru-balance"]
-  models: ["405", "403", "4053", "40522H", "4531H", "4620H", "4658H"]
+  # The Indy-boot last; also used for select bluchers and LHS runs.
+  models:
+    - "405"         # Indy Boot, color 8 shell
+    - "403"         # Indy, alt leather
+    - "4053"        # Indy variants
+    - "4530H"       # Indy chromexcel
+    - "4531H"       # Indy brown CXL
+    - "4540H"       # Indy black CXL
+    - "4560H"       # Indy navy
+    - "4620H"       # Tanker on Trubalance
+    - "4658H"       # Derby variant
+    - "45416H"      # Trubalance PTB
   fit_notes: True to Brannock size for most wearers; the Indy-boot last.
 - name: Plaza
   aliases: [plaza]
+  models:
+    - "907"         # Plaza cap-toe bal
+    - "919"         # Straight-tip bal
+    - "9072"        # Plaza cap-toe color 8
+    - "9087"        # Wingtip
   fit_notes: Sleeker dress last; true-to-size.
 - name: Aberdeen
   aliases: [aberdeen]
-  fit_notes: Narrow dress last; size up 0.5 if between sizes.
+  models:
+    - "560"         # Cap-toe tassel
+    - "563"         # Tassel moc
+    - "664"         # LHS on Aberdeen
+    - "6131F"       # Full-strap penny
+    - "986"         # Cap-toe balmoral
+    - "56201"       # Tassel, color 8 shell
+    - "662"         # Plain-toe blucher on Aberdeen
+  fit_notes: Narrow dress last; generally size down 0.5 from Brannock. Used for most Alden loafers and tassels.
 - name: Modified
   aliases: [modified, mod last]
+  models:
+    - "975M"        # LWB on modified
+    - "990M"
+    - "D7911"
   fit_notes: Sculpted arch support; the orthopedic last. Size down 0.5 from Brannock.
 - name: Hampton
   aliases: [hampton]
+  models: ["H402", "H403"]
   fit_notes: Broad toe box, bold profile.
 - name: Grant
   aliases: [grant]
@@ -32,7 +78,8 @@
   fit_notes: Updated dress last, cleaner lines than Plaza.
 - name: Van
   aliases: [van]
-  fit_notes: Versatile casual last.
+  models: ["6122", "6125", "6131"]
+  fit_notes: Versatile casual/loafer last.
 - name: Leydon
   aliases: [leydon]
   fit_notes: Updated casual last, sleeker than Barrie.

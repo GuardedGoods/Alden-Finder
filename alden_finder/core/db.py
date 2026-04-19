@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 import os
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from functools import lru_cache
 from typing import Any
 
@@ -324,3 +324,95 @@ def search(f: FilterSpec, limit: int = 200) -> list[dict]:
         rows.sort(key=lambda p: p.get("last_seen_at") or "", reverse=True)
 
     return rows[:limit]
+
+
+# ---------------------------------------------------------------------------
+# Home-page modules
+# ---------------------------------------------------------------------------
+
+
+def _attach_retailers(rows: list[dict]) -> list[dict]:
+    retailers_by_id = {r["id"]: r for r in list_retailers(active_only=False)}
+    for p in rows:
+        p["_retailer"] = retailers_by_id.get(p.get("retailer_id"), {})
+    return rows
+
+
+def get_new_arrivals(days: int = 7, limit: int = 12) -> list[dict]:
+    """Products whose first_seen_at falls within the last `days` days."""
+    cutoff = datetime.now(UTC) - timedelta(days=days)
+    client = _client()
+    if client is None:
+        rows = [
+            p for p in _SAMPLE_PRODUCTS
+            if p.get("stock_state") != "out_of_stock"
+            and (p.get("first_seen_at") or p.get("last_seen_at") or "") >= cutoff.isoformat()
+        ]
+    else:
+        rows = (
+            client.table("products")
+            .select("*")
+            .gte("first_seen_at", cutoff.isoformat())
+            .neq("stock_state", "out_of_stock")
+            .order("first_seen_at", desc=True)
+            .limit(limit)
+            .execute()
+            .data
+            or []
+        )
+    rows.sort(key=lambda p: p.get("first_seen_at") or p.get("last_seen_at") or "", reverse=True)
+    return _attach_retailers(rows[:limit])
+
+
+def get_just_sold_out(hours: int = 48, limit: int = 8) -> list[dict]:
+    """Products that flipped to out_of_stock in the last `hours` hours."""
+    cutoff = datetime.now(UTC) - timedelta(hours=hours)
+    client = _client()
+    if client is None:
+        rows = [
+            p for p in _SAMPLE_PRODUCTS
+            if p.get("stock_state") == "out_of_stock"
+            and (p.get("last_checked_at") or "") >= cutoff.isoformat()
+        ]
+    else:
+        rows = (
+            client.table("products")
+            .select("*")
+            .eq("stock_state", "out_of_stock")
+            .gte("last_checked_at", cutoff.isoformat())
+            .order("last_checked_at", desc=True)
+            .limit(limit)
+            .execute()
+            .data
+            or []
+        )
+    return _attach_retailers(rows[:limit])
+
+
+# ---------------------------------------------------------------------------
+# Alerts
+# ---------------------------------------------------------------------------
+
+
+def save_alert(email: str, filter_spec: FilterSpec) -> bool:
+    """Persist an alert subscription. Returns True on success.
+
+    In sample mode (no DB), this is a no-op that returns False so the UI can
+    surface "alerts require a configured database" rather than silently
+    pretending to work.
+    """
+    client = _client()
+    if client is None:
+        return False
+    try:
+        client.table("alerts").insert(
+            {
+                "email": email.strip().lower(),
+                "filter_json": filter_spec.model_dump(mode="json"),
+                "active": True,
+            }
+        ).execute()
+        return True
+    except Exception as e:
+        log.warning("save_alert failed: %s", e)
+        return False
