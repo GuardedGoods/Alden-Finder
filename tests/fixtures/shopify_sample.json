@@ -1,0 +1,29 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "handle": "alden-405-indy-boot-color-8-shell",
+      "title": "Alden 405 Indy Boot - Color 8 Shell Cordovan",
+      "vendor": "Alden",
+      "body_html": "<p>Iconic Alden 405 on the Trubalance last.</p>",
+      "image": { "src": "https://cdn.example.com/405-color-8.jpg" },
+      "images": [ { "src": "https://cdn.example.com/405-color-8.jpg" } ],
+      "variants": [
+        { "id": 101, "sku": "405-09D", "title": "9 / D", "price": "980.00", "available": false },
+        { "id": 102, "sku": "405-10D", "title": "10 / D", "price": "980.00", "available": true },
+        { "id": 103, "sku": "405-10.5D", "title": "10.5 / D", "price": "980.00", "available": true }
+      ]
+    },
+    {
+      "id": 2,
+      "handle": "alden-975-longwing-color-8",
+      "title": "Alden 975 Longwing Blucher - Color 8 Shell (Barrie)",
+      "vendor": "Alden",
+      "body_html": "",
+      "image": { "src": "https://cdn.example.com/975.jpg" },
+      "variants": [
+        { "id": 201, "sku": "975-10D", "title": "10 / D", "price": "925.00", "available": true }
+      ]
+    }
+  ]
+}

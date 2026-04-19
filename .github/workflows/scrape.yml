@@ -1,0 +1,48 @@
+name: Scrape retailers
+
+on:
+  schedule:
+    - cron: "7 * * * *"       # every hour at :07
+  workflow_dispatch:
+    inputs:
+      retailer:
+        description: "Only scrape retailers whose name contains this string"
+        required: false
+        default: ""
+      parallel:
+        description: "Concurrent retailer scrapes"
+        required: false
+        default: "4"
+
+concurrency:
+  group: scrape
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Scrape
+        run: |
+          python -m alden_finder.scraping.runner \
+            ${{ github.event.inputs.retailer && format('--retailer "{0}"', github.event.inputs.retailer) || '' }} \
+            --parallel ${{ github.event.inputs.parallel || 4 }} -vv

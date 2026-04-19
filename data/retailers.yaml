@@ -1,0 +1,694 @@
+# Alden Finder retailer registry.
+#
+# Source of truth for the scrapers and the UI. Each entry:
+#   name          — display name
+#   url           — canonical home / Alden collection page
+#   country       — ISO-3166 alpha-2
+#   currency      — ISO-4217 as displayed on site
+#   adapter_key   — name of the adapter in alden_finder/adapters/
+#                   "shopify"     → generic Shopify (/collections/alden/products.json)
+#                   "woo"         → generic WooCommerce
+#                   "static"      → no e-commerce; UI shows "contact retailer"
+#                   otherwise     → a bespoke module (alden_finder/adapters/<key>.py)
+#   active        — scrape? false = "verify" or no-ecom (still shown in UI with badge)
+#   rate_limit_s  — min seconds between requests to this domain
+#   ships_to      — list of ISO-3166 alpha-2 codes the retailer ships to (best-effort)
+#   source_type   — authorized | seconds | mto | resale
+#   notes         — surfaced in UI as retailer tooltip
+#
+# To add a new retailer: open a PR editing only this file.
+# Dealer opt-out: set active: false and add a note.
+
+# ============================================================ United States
+- name: The Alden Shop (official)
+  url: https://www.aldenshop.com
+  country: US
+  currency: USD
+  adapter_key: aldenshop
+  active: true
+  rate_limit_s: 3.0
+  ships_to: [US]
+  source_type: authorized
+  notes: Alden Shoe Company's own retail operation.
+
+- name: Alden Madison Avenue
+  url: https://aldenmadison.com
+  country: US
+  currency: USD
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [US]
+  source_type: authorized
+
+- name: Alden of San Francisco
+  url: https://www.aldensf.com
+  country: US
+  currency: USD
+  adapter_key: alden_sf
+  active: true
+  rate_limit_s: 2.5
+  ships_to: [US]
+  source_type: authorized
+  notes: Deep MTO program; legendary shell-cordovan runs.
+
+- name: Alden of Carmel
+  url: https://www.aldenofcarmel.com
+  country: US
+  currency: USD
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [US]
+  source_type: authorized
+
+- name: Alden Shop Washington D.C.
+  url: https://www.aldendc.com
+  country: US
+  currency: USD
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [US]
+  source_type: authorized
+
+- name: The Shoe Mart
+  url: https://www.theshoemart.com
+  country: US
+  currency: USD
+  adapter_key: shoemart
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [US, CA]
+  source_type: authorized
+
+- name: Leffot
+  url: https://leffot.com
+  country: US
+  currency: USD
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [US, CA, GB, SE, DE, FR, JP, AU]
+  source_type: authorized
+  notes: Frequent MTO pre-orders.
+
+- name: Sherman Brothers Shoe Store
+  url: https://www.shermanbros.com
+  country: US
+  currency: USD
+  adapter_key: woo
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [US]
+  source_type: authorized
+
+- name: Moulded Shoe
+  url: https://www.mouldedshoe.com
+  country: US
+  currency: USD
+  adapter_key: static
+  active: false
+  rate_limit_s: 2.0
+  ships_to: [US]
+  source_type: authorized
+  notes: No public e-commerce; contact-to-order.
+
+- name: Brick + Mortar Seattle
+  url: https://brickmortarseattle.com
+  country: US
+  currency: USD
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [US]
+  source_type: authorized
+
+- name: Gentlemen's Footwear
+  url: https://gentlemensfootwear.com
+  country: US
+  currency: USD
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [US]
+  source_type: authorized
+
+- name: Ealdwine
+  url: https://www.ealdwineraleigh.com
+  country: US
+  currency: USD
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [US]
+  source_type: authorized
+
+- name: O'Connell's Clothing
+  url: https://www.oconnellsclothing.com
+  country: US
+  currency: USD
+  adapter_key: woo
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [US]
+  source_type: authorized
+
+- name: Sid Mashburn
+  url: https://sidmashburn.com
+  country: US
+  currency: USD
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [US, CA]
+  source_type: authorized
+
+- name: Stanley Korshak
+  url: https://www.stanleykorshak.com
+  country: US
+  currency: USD
+  adapter_key: static
+  active: false
+  rate_limit_s: 2.0
+  ships_to: [US]
+  source_type: authorized
+  notes: Limited online inventory.
+
+- name: Epaulet
+  url: https://www.epauletnewyork.com
+  country: US
+  currency: USD
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [US]
+  source_type: authorized
+
+- name: Context Clothing
+  url: https://www.contextclothing.com
+  country: US
+  currency: USD
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [US]
+  source_type: authorized
+
+- name: J. Gilbert Footwear
+  url: https://www.jgilbertfootwear.com
+  country: US
+  currency: USD
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [US]
+  source_type: authorized
+
+- name: Todd Snyder
+  url: https://www.toddsnyder.com
+  country: US
+  currency: USD
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.5
+  ships_to: [US]
+  source_type: authorized
+  notes: Alden available as a collab drop, not always in stock.
+
+- name: Paul Stuart
+  url: https://www.paulstuart.com
+  country: US
+  currency: USD
+  adapter_key: static
+  active: false
+  rate_limit_s: 2.0
+  ships_to: [US]
+  source_type: authorized
+
+- name: Eljo's
+  url: https://www.eljos.com
+  country: US
+  currency: USD
+  adapter_key: static
+  active: false
+  rate_limit_s: 2.0
+  ships_to: [US]
+  source_type: authorized
+
+- name: Miller Brothers Ltd.
+  url: https://www.millerbros.com
+  country: US
+  currency: USD
+  adapter_key: static
+  active: false
+  rate_limit_s: 2.0
+  ships_to: [US]
+  source_type: authorized
+
+- name: H. Stockton
+  url: https://www.hstockton.com
+  country: US
+  currency: USD
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [US]
+  source_type: authorized
+
+- name: M. Penner
+  url: https://www.mpenner.com
+  country: US
+  currency: USD
+  adapter_key: static
+  active: false
+  rate_limit_s: 2.0
+  ships_to: [US]
+  source_type: authorized
+
+- name: Harley's of Naples
+  url: https://www.harleysofnaples.com
+  country: US
+  currency: USD
+  adapter_key: static
+  active: false
+  rate_limit_s: 2.0
+  ships_to: [US]
+  source_type: authorized
+
+# ============================================================ Canada
+- name: Mr. Derk
+  url: https://mrderk.com
+  country: CA
+  currency: CAD
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [CA, US]
+  source_type: authorized
+  notes: Primary Canadian Alden dealer.
+
+- name: GS Douville
+  url: https://www.gsdouville.ca
+  country: CA
+  currency: CAD
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [CA]
+  source_type: authorized
+
+- name: Newman's Menswear
+  url: https://newmansmenswear.ca
+  country: CA
+  currency: CAD
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [CA]
+  source_type: authorized
+
+- name: Fodemesi Shoes
+  url: https://www.fodemesishoes.com
+  country: CA
+  currency: CAD
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [CA]
+  source_type: authorized
+
+- name: Knapp's Shoes
+  url: https://www.knapps.ca
+  country: CA
+  currency: CAD
+  adapter_key: static
+  active: false
+  rate_limit_s: 2.0
+  ships_to: [CA]
+  source_type: authorized
+
+# ============================================================ United Kingdom
+- name: Abbot's Shoes
+  url: https://abbotsshoes.com
+  country: GB
+  currency: GBP
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [GB, EU]
+  source_type: authorized
+
+- name: Trunk Clothiers
+  url: https://www.trunkclothiers.com
+  country: GB
+  currency: GBP
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [GB, EU, US]
+  source_type: authorized
+
+- name: Clutch Cafe
+  url: https://clutchcafe.com
+  country: GB
+  currency: GBP
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [GB, EU, US, JP]
+  source_type: authorized
+
+- name: The Bureau Belfast
+  url: https://thebureaubelfast.com
+  country: GB
+  currency: GBP
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [GB, EU, US]
+  source_type: authorized
+
+- name: Oi Polloi
+  url: https://www.oipolloi.com
+  country: GB
+  currency: GBP
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [GB, EU, US]
+  source_type: authorized
+
+# ============================================================ Europe (EU/EEA)
+- name: Frans Boone Store
+  url: https://www.fransboonestore.com
+  country: NL
+  currency: EUR
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [NL, DE, BE, FR, GB, US]
+  source_type: authorized
+
+- name: Taf Store
+  url: https://tafstore.com
+  country: BE
+  currency: EUR
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [BE, NL, FR, DE]
+  source_type: authorized
+
+- name: Upper Shoes
+  url: https://www.upper-shoes.com
+  country: FR
+  currency: EUR
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [FR, BE, DE, GB]
+  source_type: authorized
+
+- name: Herrenausstatter
+  url: https://www.herrenausstatter.de
+  country: DE
+  currency: EUR
+  adapter_key: static
+  active: false
+  rate_limit_s: 2.0
+  ships_to: [DE, EU]
+  source_type: authorized
+
+- name: Shoepassion
+  url: https://www.shoepassion.com
+  country: DE
+  currency: EUR
+  adapter_key: static
+  active: false
+  rate_limit_s: 2.0
+  ships_to: [DE, EU]
+  source_type: authorized
+
+- name: Cappelletto Shop
+  url: https://www.cappellettoshop.com
+  country: IT
+  currency: EUR
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [IT, EU]
+  source_type: authorized
+
+- name: Albaladejo
+  url: https://www.albaladejomadrid.com
+  country: ES
+  currency: EUR
+  adapter_key: static
+  active: false
+  rate_limit_s: 2.0
+  ships_to: [ES]
+  source_type: authorized
+
+- name: Gabucci
+  url: https://gabuccistore.com
+  country: SE
+  currency: SEK
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [SE, EU]
+  source_type: authorized
+
+- name: Skoaktiebolaget
+  url: https://www.skoaktiebolaget.se
+  country: SE
+  currency: SEK
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [SE, EU, GB, US, JP, AU]
+  source_type: authorized
+  notes: Runs large MTO group orders.
+
+- name: Skomaker Dagestad
+  url: https://skomakerdagestad.no
+  country: "NO"
+  currency: NOK
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: ["NO", EU]
+  source_type: authorized
+
+# ============================================================ Asia-Pacific
+- name: The Armoury
+  url: https://www.thearmoury.com
+  country: HK
+  currency: HKD
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.5
+  ships_to: [HK, US, JP, GB]
+  source_type: authorized
+
+- name: BEAMS
+  url: https://www.beams.co.jp
+  country: JP
+  currency: JPY
+  adapter_key: static
+  active: false
+  rate_limit_s: 3.0
+  ships_to: [JP]
+  source_type: authorized
+  notes: Complex JP-only storefront; dedicated adapter pending.
+
+- name: United Arrows
+  url: https://www.united-arrows.co.jp
+  country: JP
+  currency: JPY
+  adapter_key: static
+  active: false
+  rate_limit_s: 3.0
+  ships_to: [JP]
+  source_type: authorized
+
+- name: Ships
+  url: https://www.shipsltd.co.jp
+  country: JP
+  currency: JPY
+  adapter_key: static
+  active: false
+  rate_limit_s: 3.0
+  ships_to: [JP]
+  source_type: authorized
+
+- name: Tomorrowland
+  url: https://www.tomorrowland.co.jp
+  country: JP
+  currency: JPY
+  adapter_key: static
+  active: false
+  rate_limit_s: 3.0
+  ships_to: [JP]
+  source_type: authorized
+
+- name: Strasburgo
+  url: https://www.strasburgo.co.jp
+  country: JP
+  currency: JPY
+  adapter_key: static
+  active: false
+  rate_limit_s: 3.0
+  ships_to: [JP]
+  source_type: authorized
+
+- name: Isetan Shinjuku
+  url: https://www.isetan.mistore.jp
+  country: JP
+  currency: JPY
+  adapter_key: static
+  active: false
+  rate_limit_s: 3.0
+  ships_to: [JP]
+  source_type: authorized
+
+- name: Lakota House
+  url: https://www.lakotahouse.com
+  country: JP
+  currency: JPY
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 3.0
+  ships_to: [JP, US]
+  source_type: authorized
+
+- name: Lost City
+  url: https://www.lostcity.jp
+  country: JP
+  currency: JPY
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 3.0
+  ships_to: [JP]
+  source_type: authorized
+
+- name: Brift H / The Way Things Go
+  url: https://theway-things-go.jp
+  country: JP
+  currency: JPY
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 3.0
+  ships_to: [JP]
+  source_type: authorized
+
+- name: Arzach Kamakura
+  url: https://arzachstore.jp
+  country: JP
+  currency: JPY
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 3.0
+  ships_to: [JP]
+  source_type: authorized
+
+- name: Resolute
+  url: https://www.resolute.jp
+  country: JP
+  currency: JPY
+  adapter_key: static
+  active: false
+  rate_limit_s: 3.0
+  ships_to: [JP]
+  source_type: authorized
+
+- name: Bears Osaka
+  url: https://www.bears-osaka.com
+  country: JP
+  currency: JPY
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 3.0
+  ships_to: [JP]
+  source_type: authorized
+
+- name: Unipair
+  url: https://www.unipair.net
+  country: KR
+  currency: KRW
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.5
+  ships_to: [KR, US, JP]
+  source_type: authorized
+
+- name: Boontheshop
+  url: https://www.boontheshop.com
+  country: KR
+  currency: KRW
+  adapter_key: static
+  active: false
+  rate_limit_s: 3.0
+  ships_to: [KR]
+  source_type: authorized
+
+- name: Oaklley
+  url: https://www.oaklley.com
+  country: TW
+  currency: TWD
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.5
+  ships_to: [TW]
+  source_type: authorized
+
+- name: Colony Clothing
+  url: https://colonyclothing.net
+  country: SG
+  currency: SGD
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.5
+  ships_to: [SG, MY, US, JP]
+  source_type: authorized
+
+- name: Pronto Gentleman
+  url: https://www.prontogentleman.com
+  country: TH
+  currency: THB
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.5
+  ships_to: [TH]
+  source_type: authorized
+
+- name: Signet
+  url: https://www.signetstore.com
+  country: PH
+  currency: PHP
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.5
+  ships_to: [PH]
+  source_type: authorized
+
+- name: Voxpop
+  url: https://www.voxpopstore.com
+  country: ID
+  currency: IDR
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.5
+  ships_to: [ID]
+  source_type: authorized
+
+- name: Double Monk
+  url: https://doublemonk.com
+  country: AU
+  currency: AUD
+  adapter_key: shopify
+  active: true
+  rate_limit_s: 2.0
+  ships_to: [AU, NZ, US, GB, JP]
+  source_type: authorized

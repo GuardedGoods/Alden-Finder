@@ -1,0 +1,25 @@
+# Canonical leather categories with aliases matched in product titles and descriptions.
+- name: Shell Cordovan
+  category: shell
+  aliases: [shell cordovan, shell, cordovan, horween shell, "shell cordovan leather"]
+- name: Calfskin
+  category: calf
+  aliases: [calfskin, calf, calf leather, smooth calf, french calf]
+- name: Chromexcel
+  category: cxl
+  aliases: [chromexcel, cxl, "chrome-excel"]
+- name: Suede
+  category: suede
+  aliases: [suede, reverse calf, reverse suede]
+- name: Waxy Commander
+  category: calf
+  aliases: [waxy commander, commander]
+- name: Kudu
+  category: exotic
+  aliases: [kudu]
+- name: Alpine Grain
+  category: grain
+  aliases: [alpine grain, scotch grain, hy-test grain]
+- name: Workboot Reverse
+  category: suede
+  aliases: [workboot reverse, wbr, reverse workboot]

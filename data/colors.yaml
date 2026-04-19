@@ -1,0 +1,46 @@
+# Shell cordovan and calfskin color vocabulary used in Alden titles.
+# Order matters — longer, more-specific aliases are tried before shorter ones.
+- name: Color 8
+  leather_hint: Shell Cordovan
+  aliases: ["color 8", "color #8", "colour 8", "#8"]
+- name: Color 4
+  leather_hint: Shell Cordovan
+  aliases: ["color 4", "color #4", "#4"]
+- name: Cigar
+  leather_hint: Shell Cordovan
+  aliases: [cigar]
+- name: Whiskey
+  leather_hint: Shell Cordovan
+  aliases: [whiskey, whisky]
+- name: Ravello
+  leather_hint: Shell Cordovan
+  aliases: [ravello]
+- name: Natural
+  leather_hint: Shell Cordovan
+  aliases: ["natural shell", "natural cordovan", "natural"]
+- name: Tobacco
+  leather_hint: Shell Cordovan
+  aliases: [tobacco]
+- name: Marlow
+  leather_hint: Shell Cordovan
+  aliases: [marlow]
+- name: Bourbon
+  leather_hint: Shell Cordovan
+  aliases: [bourbon]
+- name: Black
+  aliases: [black]
+- name: Burgundy
+  aliases: [burgundy]
+- name: Navy
+  aliases: [navy]
+- name: Brown
+  aliases: [brown]
+- name: Snuff
+  leather_hint: Suede
+  aliases: [snuff]
+- name: Tan
+  aliases: [tan]
+- name: Dark Brown
+  aliases: [dark brown]
+- name: Cordo Brown
+  aliases: ["cordo brown", "cordovan brown"]

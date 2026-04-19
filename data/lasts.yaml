@@ -1,0 +1,62 @@
+# Canonical Alden lasts with common aliases used in product titles.
+# `aliases` are matched case-insensitively and against token boundaries.
+# `models` is a list of Alden catalog model numbers known to use this last;
+#   the classifier falls back to this mapping when the last isn't named in
+#   the title. Not exhaustive — add PRs for additions.
+# `fit_notes` are shown in the sizing helper panel.
+- name: Barrie
+  aliases: [barrie]
+  models: ["975", "9751", "9752", "9754", "990", "9901", "99016", "29334H", "D6805", "D8810H"]
+  fit_notes: Generally sized 0.5 size large of Brannock; wider forefoot.
+- name: Trubalance
+  aliases: [trubalance, tru balance, "tru-balance"]
+  models: ["405", "403", "4053", "40522H", "4531H", "4620H", "4658H"]
+  fit_notes: True to Brannock size for most wearers; the Indy-boot last.
+- name: Plaza
+  aliases: [plaza]
+  fit_notes: Sleeker dress last; true-to-size.
+- name: Aberdeen
+  aliases: [aberdeen]
+  fit_notes: Narrow dress last; size up 0.5 if between sizes.
+- name: Modified
+  aliases: [modified, mod last]
+  fit_notes: Sculpted arch support; the orthopedic last. Size down 0.5 from Brannock.
+- name: Hampton
+  aliases: [hampton]
+  fit_notes: Broad toe box, bold profile.
+- name: Grant
+  aliases: [grant]
+  fit_notes: Classic dress last, slightly narrow.
+- name: Copley
+  aliases: [copley]
+  fit_notes: Updated dress last, cleaner lines than Plaza.
+- name: Van
+  aliases: [van]
+  fit_notes: Versatile casual last.
+- name: Leydon
+  aliases: [leydon]
+  fit_notes: Updated casual last, sleeker than Barrie.
+- name: Ace
+  aliases: [ace]
+  fit_notes: Athletic-inspired casual last.
+- name: Lindrick
+  aliases: [lindrick]
+  fit_notes: Dressier last used for some cap-toe bluchers.
+- name: Tremont
+  aliases: [tremont]
+  fit_notes: Dress last, moderate width.
+- name: Nisky
+  aliases: [nisky]
+  fit_notes: Rare dress last; narrow profile.
+- name: Miller
+  aliases: [miller]
+  fit_notes: Round-toe casual last.
+- name: Milton
+  aliases: [milton]
+  fit_notes: Softer-toed casual last.
+- name: Rojo
+  aliases: [rojo]
+  fit_notes: Occasional LHS / slip-on last.
+- name: Hinckley
+  aliases: [hinckley]
+  fit_notes: Unlined loafer last.
