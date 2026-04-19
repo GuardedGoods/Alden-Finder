@@ -30,6 +30,7 @@ dev = [
 
 [project.scripts]
 alden-scrape = "alden_finder.scraping.runner:cli"
+alden-alerts = "alden_finder.alerts.worker:cli"
 
 [build-system]
 requires = ["setuptools>=69", "wheel"]

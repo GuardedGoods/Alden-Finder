@@ -49,34 +49,13 @@ sample dataset so first-time contributors see a populated UI immediately.
 
 ## Deploy
 
-### 1. Supabase (free tier)
+Full end-to-end setup in **[docs/DEPLOY.md](docs/DEPLOY.md)**. Summary:
 
-```bash
-# Create a project at https://supabase.com, then:
-psql "$SUPABASE_DB_URL" -f db/schema.sql
-```
-
-### 2. Streamlit Community Cloud
-
-Push this repo to GitHub and connect it in Streamlit Cloud. Set these secrets
-in `Settings → Secrets`:
-
-```toml
-SUPABASE_URL        = "https://xxxxx.supabase.co"
-SUPABASE_KEY        = "eyJ...anon key..."
-```
-
-Main file: `alden_finder/app.py`.
-
-### 3. Scraping via GitHub Actions
-
-Add repository secrets:
-
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY` (scrape job needs write access)
-
-`.github/workflows/scrape.yml` runs hourly. You can trigger a one-off run
-from the Actions tab — pass `retailer` to target one adapter.
+1. **Supabase** (free tier) → run `db/schema.sql`, copy the URL + keys.
+2. **Streamlit Cloud** → point at `alden_finder/app.py`, paste secrets.
+3. **GitHub Actions secrets** → `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+   (required), plus optional `RESEND_API_KEY` / SMTP creds for alert emails.
+4. Trigger the first scrape from the Actions tab.
 
 ## Features
 
@@ -90,12 +69,20 @@ from the Actions tab — pass `retailer` to target one adapter.
 - **Mobile-first** — cards collapse to a single column, tap targets ≥44 px.
 - **Sitemap**: `search` · `status` · `about`.
 
-### Coming soon (see plan)
+### Shipped
 
-- Back-in-stock email alerts
+- **Back-in-stock email alerts** — inline subscribe form on the search page,
+  scheduled dispatch via `alden_finder.alerts.worker`, Resend / SMTP / dry-run
+  transports (`.github/workflows/alerts.yml`, hourly at `:30`).
+- **Sizing guide page** (`/guide`) with per-last fit notes, known model
+  numbers, and a US↔UK↔EU cheat sheet.
+- **"Just in" / "Just sold out"** homepage modules.
+- **Freshness badges** per card and a `/status` freshness page.
+
+### Coming soon
+
 - RSS / Atom feed per saved filter
 - Price-history sparklines on each card
-- Sizing guide page with per-last fit notes
 - Resale integration (eBay + Grailed + StyleForum best-effort)
 
 ## Add or remove a retailer
