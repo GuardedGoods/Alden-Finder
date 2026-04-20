@@ -222,27 +222,49 @@ class ShopifyAdapter(RetailerAdapter):
         try:
             r = await self.client.get(url)
         except httpx.HTTPError as e:
-            log.debug("Shopify %s %s: %s", self.retailer.get("name"), slug, e)
+            log.info("shopify %s slug=%s http-error=%s", self.retailer.get("name"), slug, e)
             return None
-        if r.status_code != 200 or "products" not in r.text:
+        if r.status_code != 200:
+            log.info(
+                "shopify %s slug=%s status=%d len=%d",
+                self.retailer.get("name"), slug, r.status_code, len(r.text),
+            )
+            return None
+        if "products" not in r.text:
+            log.info(
+                "shopify %s slug=%s status=200 but body lacks 'products' key (len=%d ct=%s)",
+                self.retailer.get("name"), slug, len(r.text), r.headers.get("content-type"),
+            )
             return None
         try:
             return r.json().get("products") or []
         except (ValueError, KeyError) as e:
-            log.debug("Shopify %s %s: non-JSON body (%s)", self.retailer.get("name"), slug, e)
+            log.info(
+                "shopify %s slug=%s non-JSON body (ct=%s err=%s)",
+                self.retailer.get("name"), slug, r.headers.get("content-type"), e,
+            )
             return None
 
     async def _discover_alden_collections(self) -> list[str]:
         """Return handles of collections whose metadata mentions Alden."""
         try:
             r = await self.client.get(f"{self.base_url}/collections.json?limit=250")
-        except httpx.HTTPError:
+        except httpx.HTTPError as e:
+            log.info("shopify %s collections.json http-error=%s", self.retailer.get("name"), e)
             return []
         if r.status_code != 200:
+            log.info(
+                "shopify %s collections.json status=%d",
+                self.retailer.get("name"), r.status_code,
+            )
             return []
         try:
             collections = r.json().get("collections") or []
-        except (ValueError, KeyError):
+        except (ValueError, KeyError) as e:
+            log.info(
+                "shopify %s collections.json non-JSON (ct=%s err=%s)",
+                self.retailer.get("name"), r.headers.get("content-type"), e,
+            )
             return []
         hits = []
         for c in collections:
@@ -253,9 +275,14 @@ class ShopifyAdapter(RetailerAdapter):
                 handle = c.get("handle")
                 if handle:
                     hits.append(handle)
+        log.info(
+            "shopify %s collections.json ok: %d collections, %d alden hits: %s",
+            self.retailer.get("name"), len(collections), len(hits), hits[:5],
+        )
         return hits
 
     async def _all_alden_products(self) -> list[dict]:
+        name = self.retailer.get("name")
         # 1. Discovery — filter non-Alden inventory that's in the same collection.
         seen_handles: set[str] = set()
         collected: list[dict] = []
@@ -263,6 +290,7 @@ class ShopifyAdapter(RetailerAdapter):
             products = await self._try_collection(handle)
             if not products:
                 continue
+            pre_filter = len(products)
             for p in products:
                 if not _is_alden_product(p):
                     continue
@@ -270,6 +298,10 @@ class ShopifyAdapter(RetailerAdapter):
                 if ph and ph not in seen_handles:
                     seen_handles.add(ph)
                     collected.append(p)
+            log.info(
+                "shopify %s discovery handle=%s raw=%d after-alden-filter=%d",
+                name, handle, pre_filter, len(collected),
+            )
         if collected:
             return collected
 
@@ -278,31 +310,49 @@ class ShopifyAdapter(RetailerAdapter):
             products = await self._try_collection(slug)
             if products:
                 hits = [p for p in products if _is_alden_product(p)]
+                log.info(
+                    "shopify %s slug-fallback slug=%s raw=%d filtered=%d",
+                    name, slug, len(products), len(hits),
+                )
                 if hits:
                     return hits
 
         # 3. Site-wide /products.json with a filter.
         try:
             r = await self.client.get(f"{self.base_url}/products.json?limit=250")
-        except httpx.HTTPError:
+        except httpx.HTTPError as e:
+            log.info("shopify %s sitewide http-error=%s", name, e)
             r = None
-        if r is not None and r.status_code == 200:
-            try:
-                all_products = r.json().get("products") or []
-            except (ValueError, KeyError):
-                all_products = []
-            hits = [
-                p for p in all_products
-                if "alden" in (p.get("title", "") + " " + (p.get("vendor") or "")).lower()
-            ]
-            if hits:
-                return hits
+        if r is not None:
+            if r.status_code != 200:
+                log.info("shopify %s sitewide status=%d", name, r.status_code)
+            else:
+                try:
+                    all_products = r.json().get("products") or []
+                except (ValueError, KeyError) as e:
+                    log.info(
+                        "shopify %s sitewide non-JSON (ct=%s err=%s)",
+                        name, r.headers.get("content-type"), e,
+                    )
+                    all_products = []
+                hits = [
+                    p for p in all_products
+                    if "alden" in (p.get("title", "") + " " + (p.get("vendor") or "")).lower()
+                ]
+                log.info(
+                    "shopify %s sitewide raw=%d filtered=%d",
+                    name, len(all_products), len(hits),
+                )
+                if hits:
+                    return hits
 
         # 4. HTML fallback — scrape the /collections/alden page for product
         #    handles and hit /products/<handle>.js per product. Covers stores
         #    where the JSON listing endpoints are disabled but the regular
         #    category pages (needed for Google) are still public.
-        return await self._html_collection_fallback()
+        fallback = await self._html_collection_fallback()
+        log.info("shopify %s html-fallback returned=%d", name, len(fallback))
+        return fallback
 
     async def _html_collection_fallback(self) -> list[dict]:
         handles: set[str] = set()
