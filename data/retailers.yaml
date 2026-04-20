@@ -363,11 +363,12 @@
   url: https://thebureaubelfast.com
   country: GB
   currency: GBP
-  adapter_key: shopify
+  adapter_key: bureau_belfast
   active: true
   rate_limit_s: 2.0
   ships_to: [GB, EU, US]
   source_type: authorized
+  notes: Custom platform; bespoke HTML adapter parsing /shop/brand/alden-for-the-bureau.
 
 - name: Oi Polloi
   url: https://www.oipolloi.com
@@ -395,10 +396,12 @@
   country: BE
   currency: EUR
   adapter_key: shopify
-  active: true
+  active: false
   rate_limit_s: 2.0
   ships_to: [BE, NL, FR, DE]
   source_type: authorized
+  notes: Not an Alden retailer — tafstore.com is The Athlete's Foot (sneakers).
+    Probably misattributed on the source list. Disabled.
 
 - name: Upper Shoes
   url: https://www.upper-shoes.com
@@ -465,11 +468,12 @@
   country: SE
   currency: SEK
   adapter_key: shopify
-  active: true
+  active: false
   rate_limit_s: 2.0
   ships_to: [SE, EU, GB, US, JP, AU]
   source_type: authorized
-  notes: Runs large MTO group orders.
+  notes: Previously carried Alden; /collections.json + /products.json probe in
+    2026-04 shows no Alden in current vendor list. Disabled until confirmed.
 
 - name: Skomaker Dagestad
   url: https://skomakerdagestad.no
