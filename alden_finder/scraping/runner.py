@@ -155,17 +155,16 @@ async def run(only: str | None = None, parallel: int = 4) -> int:
 
     limiter = _DomainLimiter()
     # Standard HTTP headers — we keep the honest User-Agent so retailers can
-    # identify and opt out of our crawler, but we also send Accept /
-    # Accept-Language / Accept-Encoding so trivial bot-detection middleware
-    # doesn't reject requests that any real HTTP client would satisfy.
+    # identify and opt out. The Accept header must PREFER JSON: a browser-like
+    # "text/html,...application/json;q=0.8" triggers content negotiation on
+    # well-behaved Shopify/BigCommerce servers that serve HTML at /products.json
+    # when the client asks for HTML with higher q-weight, which breaks every
+    # JSON endpoint in the pipeline. Accept-Language is harmless and helps
+    # with the occasional region gate.
     headers = {
         "User-Agent": USER_AGENT,
-        "Accept": (
-            "text/html,application/xhtml+xml,application/xml;q=0.9,"
-            "application/json;q=0.8,*/*;q=0.7"
-        ),
+        "Accept": "application/json, text/html;q=0.9, */*;q=0.8",
         "Accept-Language": "en-US,en;q=0.9",
-        "Accept-Encoding": "gzip, deflate, br",
     }
     timeout = httpx.Timeout(30.0, connect=10.0)
     async with httpx.AsyncClient(
