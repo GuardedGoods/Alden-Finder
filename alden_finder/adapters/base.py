@@ -85,14 +85,23 @@ class RetailerAdapter(ABC):
 # ---------------------------------------------------------------------------
 
 
-_ALDEN_COLLECTIONS = ("alden", "alden-shoes", "alden-footwear", "alden-shoe-company", "brands/alden")
+_ALDEN_COLLECTION_SLUGS = (
+    "alden", "alden-shoes", "alden-footwear", "alden-shoe-company",
+    "alden-shoe", "alden-boots", "alden-boot-co", "brands/alden",
+)
 
 
 class ShopifyAdapter(RetailerAdapter):
-    """Consumes Shopify's public /products.json endpoint.
+    """Consumes Shopify's public JSON endpoints.
 
-    Works for any retailer where the Alden products live in a discoverable
-    collection ("alden", "alden-shoes", etc.) AND products.json is not blocked.
+    Strategy, in order:
+      1. /collections.json -> auto-discover any collection whose handle,
+         title, or body_html mentions Alden, then pull /collections/<h>/products.json
+         for each. Most robust — survives bespoke collection names.
+      2. Hardcoded slug list — cheap fallback for stores that have disabled
+         /collections.json.
+      3. Site-wide /products.json with a title/vendor filter — works for
+         Alden-only stores that don't organize by collection.
     """
 
     key = "shopify"
@@ -112,26 +121,121 @@ class ShopifyAdapter(RetailerAdapter):
             log.debug("Shopify %s %s: non-JSON body (%s)", self.retailer.get("name"), slug, e)
             return None
 
-    async def _all_alden_products(self) -> list[dict]:
-        for slug in _ALDEN_COLLECTIONS:
-            products = await self._try_collection(slug)
-            if products:
-                return products
-        # Fallback: site-wide /products.json with a title filter.
+    async def _discover_alden_collections(self) -> list[str]:
+        """Return handles of collections whose metadata mentions Alden."""
         try:
-            r = await self.client.get(f"{self.base_url}/products.json?limit=250")
+            r = await self.client.get(f"{self.base_url}/collections.json?limit=250")
         except httpx.HTTPError:
             return []
         if r.status_code != 200:
             return []
         try:
-            all_products = r.json().get("products") or []
+            collections = r.json().get("collections") or []
         except (ValueError, KeyError):
             return []
-        return [
-            p for p in all_products
-            if "alden" in (p.get("title", "") + " " + (p.get("vendor") or "")).lower()
-        ]
+        hits = []
+        for c in collections:
+            hay = " ".join(
+                str(c.get(k) or "") for k in ("handle", "title", "body_html")
+            ).lower()
+            if "alden" in hay:
+                handle = c.get("handle")
+                if handle:
+                    hits.append(handle)
+        return hits
+
+    async def _all_alden_products(self) -> list[dict]:
+        # 1. Discovery.
+        seen_handles: set[str] = set()
+        collected: list[dict] = []
+        for handle in await self._discover_alden_collections():
+            products = await self._try_collection(handle)
+            if not products:
+                continue
+            for p in products:
+                ph = p.get("handle")
+                if ph and ph not in seen_handles:
+                    seen_handles.add(ph)
+                    collected.append(p)
+        if collected:
+            return collected
+
+        # 2. Hardcoded slug guesses.
+        for slug in _ALDEN_COLLECTION_SLUGS:
+            products = await self._try_collection(slug)
+            if products:
+                return products
+
+        # 3. Site-wide /products.json with a filter.
+        try:
+            r = await self.client.get(f"{self.base_url}/products.json?limit=250")
+        except httpx.HTTPError:
+            r = None
+        if r is not None and r.status_code == 200:
+            try:
+                all_products = r.json().get("products") or []
+            except (ValueError, KeyError):
+                all_products = []
+            hits = [
+                p for p in all_products
+                if "alden" in (p.get("title", "") + " " + (p.get("vendor") or "")).lower()
+            ]
+            if hits:
+                return hits
+
+        # 4. HTML fallback — scrape the /collections/alden page for product
+        #    handles and hit /products/<handle>.js per product. Covers stores
+        #    where the JSON listing endpoints are disabled but the regular
+        #    category pages (needed for Google) are still public.
+        return await self._html_collection_fallback()
+
+    async def _html_collection_fallback(self) -> list[dict]:
+        handles: set[str] = set()
+        for slug in _ALDEN_COLLECTION_SLUGS:
+            try:
+                r = await self.client.get(f"{self.base_url}/collections/{slug}")
+            except httpx.HTTPError:
+                continue
+            if r.status_code != 200:
+                continue
+            # Shopify product URLs always look like /products/<handle>.
+            for m in re.finditer(r"/products/([a-z0-9][a-z0-9\-]{2,})", r.text):
+                handles.add(m.group(1))
+            if handles:
+                break
+        if not handles:
+            return []
+
+        out: list[dict] = []
+        for handle in list(handles)[:60]:       # cap so a weird page can't explode the run
+            try:
+                r = await self.client.get(f"{self.base_url}/products/{handle}.js")
+            except httpx.HTTPError:
+                continue
+            if r.status_code != 200:
+                continue
+            try:
+                product = r.json()
+            except (ValueError, KeyError):
+                continue
+            if not product or not product.get("variants"):
+                continue
+            if "alden" not in (
+                (product.get("title") or "") + " " + (product.get("vendor") or "")
+            ).lower():
+                continue
+            # .js returns price as integer cents; /products.json format used by
+            # the rest of the pipeline expects string dollars. Normalize.
+            for v in product.get("variants") or []:
+                raw = v.get("price")
+                if isinstance(raw, int):
+                    v["price"] = f"{raw / 100:.2f}"
+                if "available" not in v:
+                    v["available"] = True
+            if not product.get("image") and product.get("featured_image"):
+                product["image"] = {"src": product["featured_image"]}
+            out.append(product)
+        return out
 
     async def fetch(self) -> AsyncIterator[dict]:
         products = await self._all_alden_products()
