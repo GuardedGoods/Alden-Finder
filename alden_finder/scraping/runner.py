@@ -128,7 +128,11 @@ async def _scrape_one(entry: dict, client: httpx.AsyncClient, limiter: _DomainLi
         db.mark_products_unseen(entry["id"], seen_skus)
         if count == 0:
             status = "partial"
-            error = "no products parsed"
+            # Surface the adapter's per-strategy breadcrumbs directly in the
+            # error column so /status shows WHY this retailer came back empty
+            # without needing to dig through Actions logs.
+            diag = getattr(adapter, "diag_summary", "")
+            error = f"no products parsed ({diag})" if diag else "no products parsed"
     except Exception as exc:
         status = "error"
         error = f"{type(exc).__name__}: {exc}"
