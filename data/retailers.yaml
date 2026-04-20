@@ -29,48 +29,58 @@
   rate_limit_s: 3.0
   ships_to: [US]
   source_type: authorized
-  notes: Alden Shoe Company's own retail operation.
+  notes: Alden Shoe Company's own retail operation. Shopify, Alden-only;
+    bespoke adapter paginates /collections/all/products.json and dedupes
+    by product id (store catalog is ~200 products, not 6000+).
 
 - name: Alden Madison Avenue
   url: https://aldenmadison.com
   country: US
   currency: USD
-  adapter_key: shopify
+  adapter_key: aldenmadison
   active: true
   rate_limit_s: 2.0
   ships_to: [US]
   source_type: authorized
+  notes: Shopify, Alden-only; bespoke adapter iterates /products.json
+    site-wide (no per-brand collection exists — the whole catalog is Alden).
 
 - name: Alden of San Francisco
   url: https://www.aldensf.com
   country: US
   currency: USD
   adapter_key: alden_sf
-  active: true
+  active: false
   rate_limit_s: 2.5
   ships_to: [US]
   source_type: authorized
-  notes: Deep MTO program; legendary shell-cordovan runs.
+  notes: Domain doesn't resolve as of 2026-04 probe; the SF store's
+    online commerce now runs through aldenshop.com (The Alden Shop).
+    Disabled to avoid duplicate listings.
 
 - name: Alden of Carmel
   url: https://www.aldenofcarmel.com
   country: US
   currency: USD
   adapter_key: shopify
-  active: true
+  active: false
   rate_limit_s: 2.0
   ships_to: [US]
   source_type: authorized
+  notes: 301-redirects to brickmortarseattle.com — same inventory as
+    "Brick + Mortar Seattle" in this registry. Disabled to avoid dupes.
 
 - name: Alden Shop Washington D.C.
-  url: https://www.aldendc.com
+  url: https://www.aldenshoedc.com
   country: US
   currency: USD
-  adapter_key: shopify
-  active: true
-  rate_limit_s: 2.0
+  adapter_key: static
+  active: false
+  rate_limit_s: 3.0
   ships_to: [US]
   source_type: authorized
+  notes: Legacy non-Shopify site at aldenshoedc.com (original aldendc.com
+    domain is dead). Bespoke HTML adapter pending investigation.
 
 - name: The Shoe Mart
   url: https://www.theshoemart.com
@@ -78,9 +88,10 @@
   currency: USD
   adapter_key: shoemart
   active: true
-  rate_limit_s: 2.0
+  rate_limit_s: 2.5
   ships_to: [US, CA]
   source_type: authorized
+  notes: BigCommerce Stencil; bespoke HTML adapter parsing /alden-shoes/.
 
 - name: Leffot
   url: https://leffot.com
@@ -94,14 +105,16 @@
   notes: Next.js + Prismic; bespoke HTML adapter. Frequent MTO pre-orders.
 
 - name: Sherman Brothers Shoe Store
-  url: https://www.shermanbros.com
+  url: https://www.shermanbrothers.com
   country: US
   currency: USD
-  adapter_key: woo
+  adapter_key: sherman_brothers
   active: true
-  rate_limit_s: 2.0
+  rate_limit_s: 2.5
   ships_to: [US]
   source_type: authorized
+  notes: BigCommerce Stencil; bespoke HTML adapter. Fixed URL from
+    shermanbros.com (which 503s) to shermanbrothers.com.
 
 - name: Moulded Shoe
   url: https://www.mouldedshoe.com
@@ -138,31 +151,36 @@
   url: https://www.ealdwineraleigh.com
   country: US
   currency: USD
-  adapter_key: shopify
+  adapter_key: ealdwine
   active: true
-  rate_limit_s: 2.0
+  rate_limit_s: 2.5
   ships_to: [US]
   source_type: authorized
+  notes: Squarespace; bespoke adapter pulling /alden?format=json.
 
 - name: O'Connell's Clothing
-  url: https://www.oconnellsclothing.com
+  url: https://oconnellsclothing.com
   country: US
   currency: USD
-  adapter_key: woo
+  adapter_key: oconnells
   active: true
-  rate_limit_s: 2.0
+  rate_limit_s: 3.0
   ships_to: [US]
   source_type: authorized
+  notes: Magento with Sucuri/Cloudflare WAF; bespoke HTML adapter parsing
+    /brands/alden-shoe.html. May 403 on first-pass probes.
 
 - name: Sid Mashburn
-  url: https://sidmashburn.com
+  url: https://shopmashburn.com
   country: US
   currency: USD
   adapter_key: shopify
-  active: true
+  active: false
   rate_limit_s: 2.0
   ships_to: [US, CA]
   source_type: authorized
+  notes: 2026-04 probe found no Alden collection on shopmashburn.com
+    (the canonical domain). Disabled until they re-stock.
 
 - name: Stanley Korshak
   url: https://www.stanleykorshak.com
@@ -176,34 +194,42 @@
   notes: Limited online inventory.
 
 - name: Epaulet
-  url: https://www.epauletnewyork.com
+  url: https://epauletbrand.com
   country: US
   currency: USD
   adapter_key: shopify
-  active: true
+  active: false
   rate_limit_s: 2.0
   ships_to: [US]
   source_type: authorized
+  notes: Shopify, but a 2026-04 probe found no Alden inventory on
+    epauletbrand.com (the domain the old epauletnewyork.com now redirects
+    to). Disabled until they re-stock.
 
 - name: Context Clothing
   url: https://www.contextclothing.com
   country: US
   currency: USD
-  adapter_key: shopify
-  active: true
+  adapter_key: static
+  active: false
   rate_limit_s: 2.0
   ships_to: [US]
   source_type: authorized
+  notes: Legacy custom PHP store (not Shopify); bespoke adapter pending
+    further investigation of the brand-filter URL pattern.
 
 - name: J. Gilbert Footwear
   url: https://www.jgilbertfootwear.com
   country: US
   currency: USD
-  adapter_key: shopify
+  adapter_key: j_gilbert
   active: true
-  rate_limit_s: 2.0
+  rate_limit_s: 3.0
   ships_to: [US]
   source_type: authorized
+  notes: WordPress (WP e-Commerce); bespoke HTML adapter walking
+    /products-page/alden-boots/. Origin has aggressive 503 behavior;
+    may fail intermittently.
 
 - name: Todd Snyder
   url: https://www.toddsnyder.com
@@ -250,11 +276,13 @@
   url: https://www.hstockton.com
   country: US
   currency: USD
-  adapter_key: shopify
-  active: true
+  adapter_key: static
+  active: false
   rate_limit_s: 2.0
   ships_to: [US]
   source_type: authorized
+  notes: Webflow informational site only; orders are phone/email.
+    Disabled — no live inventory endpoint to scrape.
 
 - name: M. Penner
   url: https://www.mpenner.com
@@ -312,11 +340,13 @@
   url: https://www.fodemesishoes.com
   country: CA
   currency: CAD
-  adapter_key: shopify
-  active: true
+  adapter_key: static
+  active: false
   rate_limit_s: 2.0
   ships_to: [CA]
   source_type: authorized
+  notes: Brick-and-mortar only; no online catalog exists (domain ECONNREFUSED
+    in 2026-04). Disabled — no scrape target.
 
 - name: Knapp's Shoes
   url: https://www.knapps.ca
@@ -490,11 +520,13 @@
   url: https://www.thearmoury.com
   country: HK
   currency: HKD
-  adapter_key: shopify
+  adapter_key: armoury
   active: true
   rate_limit_s: 2.5
   ships_to: [HK, US, JP, GB]
   source_type: authorized
+  notes: Headless Shopify; products live at /collections/alden/<handle>
+    not /products/<handle>. Bespoke HTML adapter.
 
 - name: BEAMS
   url: https://www.beams.co.jp
@@ -588,7 +620,7 @@
   source_type: authorized
 
 - name: Arzach Kamakura
-  url: https://arzachstore.jp
+  url: https://ar139kamakura.com
   country: JP
   currency: JPY
   adapter_key: shopify
@@ -596,6 +628,8 @@
   rate_limit_s: 3.0
   ships_to: [JP]
   source_type: authorized
+  notes: Live commerce lives at ar139kamakura.com; arzachstore.jp is just
+    a marketing landing page.
 
 - name: Resolute
   url: https://www.resolute.jp
@@ -621,11 +655,13 @@
   url: https://www.unipair.net
   country: KR
   currency: KRW
-  adapter_key: shopify
-  active: true
-  rate_limit_s: 2.5
+  adapter_key: static
+  active: false
+  rate_limit_s: 3.0
   ships_to: [KR, US, JP]
   source_type: authorized
+  notes: Cafe24 platform (Korean commerce); needs bespoke Cafe24 adapter
+    that walks /product/list.html?cate_no=<N>. Pending.
 
 - name: Boontheshop
   url: https://www.boontheshop.com

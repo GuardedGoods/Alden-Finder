@@ -1,14 +1,9 @@
-"""Bespoke adapter for https://www.aldenshop.com (The Alden Shop).
+"""Bespoke adapter for https://aldenmadison.com (Alden Madison Avenue).
 
-aldenshop.com is Alden Shoe Company's own retail Shopify. Every product on
-the site is Alden by definition, so there's no "alden" collection — the
-store is organized by last, leather, category, etc. A naive site-wide
-iteration + cross-collection iteration produces the same product many
-times (once per collection membership times once per variant, giving
-~6000 rows for a ~200-product catalog).
-
-This adapter paginates `/collections/all/products.json?limit=250&page=N`
-and dedupes by Shopify's stable `product.id` before emitting.
+Alden Madison is a Shopify store that stocks only Alden. They don't have
+a per-brand collection (there's no `alden` handle); instead the entire
+catalog is Alden. We iterate site-wide `/products.json?page=N` and
+dedupe by product.id.
 """
 
 from __future__ import annotations
@@ -22,20 +17,20 @@ from alden_finder.adapters.base import ShopifyAdapter
 
 log = logging.getLogger(__name__)
 
-_MAX_PAGES = 8  # 8 * 250 = 2000 product ceiling
+_MAX_PAGES = 8
 
 
 class Adapter(ShopifyAdapter):
-    key = "aldenshop"
+    key = "aldenmadison"
 
     async def fetch(self) -> AsyncIterator[dict]:
         seen_ids: set[int] = set()
         for page in range(1, _MAX_PAGES + 1):
-            url = f"{self.base_url}/collections/all/products.json?limit=250&page={page}"
+            url = f"{self.base_url}/products.json?limit=250&page={page}"
             try:
                 r = await self.client.get(url)
             except httpx.HTTPError as e:
-                log.debug("aldenshop page %d: %s", page, e)
+                log.debug("aldenmadison page %d: %s", page, e)
                 break
             if r.status_code != 200:
                 break

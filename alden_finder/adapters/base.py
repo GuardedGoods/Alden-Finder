@@ -7,6 +7,7 @@ the scraping runner wires I/O + DB together.
 
 from __future__ import annotations
 
+import json
 import logging
 import re
 from abc import ABC, abstractmethod
@@ -18,6 +19,102 @@ from selectolax.parser import HTMLParser
 
 from alden_finder.core.models import SourceType, StockState
 from alden_finder.core.normalize import classify
+
+# ---------------------------------------------------------------------------
+# Shared HTML parsing helpers used by bespoke adapters.
+# ---------------------------------------------------------------------------
+
+
+def parse_jsonld_product(html: str) -> dict | None:
+    """Extract the first schema.org Product from a page's JSON-LD blocks.
+
+    Returns a dict with keys {title, image, price_minor, in_stock} or None
+    if no Product schema was found. Handles plain dict, list-of-dicts,
+    and @graph-wrapped forms.
+    """
+    dom = HTMLParser(html)
+    for script in dom.css('script[type="application/ld+json"]'):
+        try:
+            data = json.loads(script.text())
+        except (ValueError, TypeError):
+            continue
+        prod = _find_product(data)
+        if prod is not None:
+            return _product_from_jsonld(prod)
+    return None
+
+
+def parse_og_product(html: str) -> dict | None:
+    """Fallback: build a product dict from OpenGraph / product: meta tags."""
+    dom = HTMLParser(html)
+    def _meta(prop: str) -> str | None:
+        el = dom.css_first(f'meta[property="{prop}"]') or dom.css_first(f'meta[name="{prop}"]')
+        return el.attributes.get("content") if el else None
+
+    h1 = dom.css_first("h1")
+    title = _meta("og:title") or (h1.text(strip=True) if h1 else "")
+    if not title:
+        return None
+    return {
+        "title": title,
+        "image": _meta("og:image"),
+        "price_minor": price_to_minor(_meta("product:price:amount") or _meta("og:price:amount")),
+        "in_stock": "sold out" not in html.lower() and "out of stock" not in html.lower(),
+    }
+
+
+def parse_product_html(html: str) -> dict | None:
+    """JSON-LD with OG fallback. One call for bespoke adapters."""
+    return parse_jsonld_product(html) or parse_og_product(html)
+
+
+def price_to_minor(raw) -> int | None:
+    if raw is None:
+        return None
+    try:
+        return round(float(str(raw).replace(",", "")) * 100)
+    except (ValueError, TypeError):
+        return None
+
+
+def _find_product(data) -> dict | None:
+    if isinstance(data, dict):
+        t = data.get("@type")
+        if t == "Product" or (isinstance(t, list) and "Product" in t):
+            return data
+        if isinstance(data.get("@graph"), list):
+            for item in data["@graph"]:
+                found = _find_product(item)
+                if found:
+                    return found
+    elif isinstance(data, list):
+        for item in data:
+            found = _find_product(item)
+            if found:
+                return found
+    return None
+
+
+def _product_from_jsonld(obj: dict) -> dict:
+    offers = obj.get("offers") or {}
+    if isinstance(offers, list) and offers:
+        offer = offers[0]
+    elif isinstance(offers, dict):
+        offer = offers
+    else:
+        offer = {}
+    image = obj.get("image")
+    if isinstance(image, list) and image:
+        image = image[0]
+    if isinstance(image, dict):
+        image = image.get("url")
+    availability = str(offer.get("availability") or "").lower()
+    return {
+        "title": obj.get("name") or "",
+        "image": image,
+        "price_minor": price_to_minor(offer.get("price") or offer.get("lowPrice")),
+        "in_stock": "instock" in availability or availability.endswith("/instock"),
+    }
 
 log = logging.getLogger(__name__)
 
@@ -88,6 +185,8 @@ class RetailerAdapter(ABC):
 _ALDEN_COLLECTION_SLUGS = (
     "alden", "alden-shoes", "alden-footwear", "alden-shoe-company",
     "alden-shoe", "alden-boots", "alden-boot-co", "brands/alden",
+    "alden-all-footwear", "alden-shell-cordovan",
+    "all-styles", "shoes", "footwear",
 )
 
 
