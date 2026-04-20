@@ -147,17 +147,27 @@ def detect_size_us(text: str) -> float | None:
 
 
 def classify(title: str, body: str = "", variant: str = "") -> dict:
-    """Return a dict of canonical fields extracted from the text."""
-    haystack = " ".join(x for x in (title, body, variant) if x)
-    color, color_leather_hint = detect_color(haystack)
-    leather = detect_leather(haystack, color_hint=color_leather_hint)
-    model_number = detect_model_number(title) or detect_model_number(haystack)
+    """Return a dict of canonical fields extracted from the text.
+
+    Attribution (last, leather, color, category, model number) runs only
+    against `title` + `variant` — NOT `body`. Product descriptions often
+    mention related models by name ("pairs well with our Trubalance-lasted
+    boots"), which caused false positives where non-Alden items picked up
+    Alden metadata from the marketing copy surrounding them.
+
+    `body` is accepted for forwards compatibility but currently unused.
+    """
+    del body  # intentionally unused; see docstring above.
+    attrib_text = " ".join(x for x in (title, variant) if x)
+    color, color_leather_hint = detect_color(attrib_text)
+    leather = detect_leather(attrib_text, color_hint=color_leather_hint)
+    model_number = detect_model_number(title) or detect_model_number(attrib_text)
     return {
-        "last_name": detect_last(haystack, model_number),
+        "last_name": detect_last(attrib_text, model_number),
         "leather_name": leather,
         "color": color,
-        "category": detect_category(haystack).value,
+        "category": detect_category(attrib_text).value,
         "model_number": model_number,
-        "size_us": detect_size_us(variant or haystack),
-        "width": detect_width(variant or haystack),
+        "size_us": detect_size_us(variant or title),
+        "width": detect_width(variant or title),
     }

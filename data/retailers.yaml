@@ -86,12 +86,12 @@
   url: https://leffot.com
   country: US
   currency: USD
-  adapter_key: shopify
+  adapter_key: leffot
   active: true
   rate_limit_s: 2.0
   ships_to: [US, CA, GB, SE, DE, FR, JP, AU]
   source_type: authorized
-  notes: Frequent MTO pre-orders.
+  notes: Next.js + Prismic; bespoke HTML adapter. Frequent MTO pre-orders.
 
 - name: Sherman Brothers Shoe Store
   url: https://www.shermanbros.com
