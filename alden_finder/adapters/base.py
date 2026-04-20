@@ -91,6 +91,18 @@ _ALDEN_COLLECTION_SLUGS = (
 )
 
 
+def _is_alden_product(p: dict) -> bool:
+    """True if a Shopify product is actually an Alden item.
+
+    Some auto-discovered collections (e.g. Colony Clothing's "alden-capsule")
+    also contain non-Alden inventory — Drumohr swim shorts, belts, wallets.
+    Every real Alden product has the vendor or title reference us to Alden
+    directly; anything else is carrier noise we don't want to index.
+    """
+    hay = (p.get("title") or "") + " " + (p.get("vendor") or "")
+    return "alden" in hay.lower()
+
+
 class ShopifyAdapter(RetailerAdapter):
     """Consumes Shopify's public JSON endpoints.
 
@@ -145,7 +157,7 @@ class ShopifyAdapter(RetailerAdapter):
         return hits
 
     async def _all_alden_products(self) -> list[dict]:
-        # 1. Discovery.
+        # 1. Discovery — filter non-Alden inventory that's in the same collection.
         seen_handles: set[str] = set()
         collected: list[dict] = []
         for handle in await self._discover_alden_collections():
@@ -153,6 +165,8 @@ class ShopifyAdapter(RetailerAdapter):
             if not products:
                 continue
             for p in products:
+                if not _is_alden_product(p):
+                    continue
                 ph = p.get("handle")
                 if ph and ph not in seen_handles:
                     seen_handles.add(ph)
@@ -160,11 +174,13 @@ class ShopifyAdapter(RetailerAdapter):
         if collected:
             return collected
 
-        # 2. Hardcoded slug guesses.
+        # 2. Hardcoded slug guesses — also filter per-product.
         for slug in _ALDEN_COLLECTION_SLUGS:
             products = await self._try_collection(slug)
             if products:
-                return products
+                hits = [p for p in products if _is_alden_product(p)]
+                if hits:
+                    return hits
 
         # 3. Site-wide /products.json with a filter.
         try:

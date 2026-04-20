@@ -60,15 +60,25 @@ def freshness_badge(last_scrape: datetime | None) -> str:
 def render_card(product: dict, display_ccy: str) -> None:
     retailer = product.get("_retailer") or {}
     price_minor = product.get("price_minor")
-    if price_minor is not None and product.get("currency") and product["currency"] != display_ccy:
-        converted = fx.convert(price_minor / 100, product["currency"], display_ccy)
-        price_label = fx.format_price(round(converted * 100), display_ccy)
-        price_label += (
-            f' <span style="opacity:0.6;font-weight:400;">'
-            f"({fx.format_price(price_minor, product['currency'])})</span>"
-        )
+    price_max = product.get("price_max_minor")
+    currency = product.get("currency") or display_ccy
+
+    def _fmt_converted(minor: int) -> str:
+        if currency and currency != display_ccy:
+            converted = fx.convert(minor / 100, currency, display_ccy)
+            return (
+                f'{fx.format_price(round(converted * 100), display_ccy)}'
+                f' <span style="opacity:0.6;font-weight:400;">'
+                f"({fx.format_price(minor, currency)})</span>"
+            )
+        return fx.format_price(minor, currency)
+
+    if price_minor is None:
+        price_label = "—"
+    elif price_max and price_max > price_minor:
+        price_label = f"from {_fmt_converted(price_minor)}"
     else:
-        price_label = fx.format_price(price_minor, product.get("currency") or display_ccy)
+        price_label = _fmt_converted(price_minor)
 
     country_badge = _country_badge(retailer.get("country"))
     last_scrape = _parse(retailer.get("last_scrape_finished_at"))
@@ -80,23 +90,50 @@ def render_card(product: dict, display_ccy: str) -> None:
     last = html.escape(product.get("last_name") or "")
     leather = html.escape(product.get("leather_name") or "")
     color = html.escape(product.get("color") or "")
-    size = product.get("size_us")
-    width = product.get("width") or ""
-    stock = product.get("stock_state") or ""
-    stock_label = {
-        "in_stock": "In stock",
-        "preorder": "Pre-order",
-        "mto": "MTO",
-        "seconds": "Seconds",
-        "pre_owned": "Pre-owned",
-        "out_of_stock": "Out of stock",
-    }.get(stock, stock)
+
+    # Grouped listings carry variants/matched_label/sizes_available. Flat
+    # per-variant rows (used by "Just in" / "Just sold out") don't.
+    sizes_available = product.get("sizes_available") or []
+    matched_label = product.get("matched_label") or ""
+    matched_in_stock = product.get("matched_in_stock")
+    n_sizes = product.get("n_sizes_in_stock")
+
+    if matched_in_stock and matched_label:
+        size_line = (
+            f'<div class="af-size-hit">Your size <b>US {html.escape(matched_label)}</b> '
+            f'is in stock</div>'
+        )
+    elif sizes_available:
+        shown = sizes_available[:8]
+        more = len(sizes_available) - len(shown)
+        rest = f" (+{more} more)" if more > 0 else ""
+        size_line = (
+            f'<div class="af-size-list"><b>{n_sizes}</b> size'
+            f'{"s" if (n_sizes or 0) != 1 else ""} in stock: '
+            f'{html.escape(", ".join("US " + s for s in shown))}{rest}</div>'
+        )
+    else:
+        # Flat row path — keep the original per-variant label.
+        size = product.get("size_us")
+        width = product.get("width") or ""
+        stock = product.get("stock_state") or ""
+        stock_label = {
+            "in_stock": "In stock",
+            "preorder": "Pre-order",
+            "mto": "MTO",
+            "seconds": "Seconds",
+            "pre_owned": "Pre-owned",
+            "out_of_stock": "Out of stock",
+        }.get(stock, stock)
+        parts = [
+            f"US {size:g}{width}" if size is not None else (width or ""),
+            stock_label,
+        ]
+        size_line = f'<div class="af-meta">{html.escape(" · ".join(p for p in parts if p))}</div>'
 
     meta_bits = [b for b in (
         f"Last: {last}" if last else "",
         f"{leather} {color}".strip() if (leather or color) else "",
-        f"US {size:g}{width}" if size is not None else (width or ""),
-        stock_label,
     ) if b]
     meta = " · ".join(meta_bits)
 
@@ -110,6 +147,7 @@ def render_card(product: dict, display_ccy: str) -> None:
           </a>
           <div class="af-title">{title}</div>
           <div class="af-meta">{html.escape(meta)}</div>
+          {size_line}
           <div class="af-price">{price_label}</div>
           <div class="af-retailer">{retailer_line}</div>
           <a class="af-buy" href="{html.escape(url)}" target="_blank" rel="noopener">

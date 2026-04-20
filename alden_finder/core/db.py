@@ -354,6 +354,132 @@ def search(f: FilterSpec, limit: int = 200) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
+# Grouped search — one card per product listing, not per variant.
+# ---------------------------------------------------------------------------
+
+_FOOTWEAR_CATEGORIES = {
+    "boot", "chukka", "indy", "oxford", "blucher",
+    "loafer", "tassel", "lwb", "saddle", "slipper",
+}
+
+
+def _variant_label(size: float | int | None, width: str | None) -> str:
+    if size is None and not width:
+        return ""
+    if size is None:
+        return (width or "").upper()
+    return f"{size:g}{(width or '').upper()}"
+
+
+def search_grouped(f: FilterSpec, limit: int = 80, footwear_only: bool = True) -> list[dict]:
+    """Return one listing per (retailer_id, url), aggregating variants.
+
+    Strategy:
+      1. Run the full search WITHOUT the size/width filters so each group has
+         its full set of variants. The original filter restrictions on last,
+         leather, color, country, etc. still apply.
+      2. Group by (retailer_id, url).
+      3. For each group, compute:
+           - a representative row (title, image, price, last, etc.)
+           - variants: [{size_us, width, stock_state, retailer_sku, price_minor}]
+           - sizes_available: sorted list of "10D", "10.5D" strings (in stock)
+           - all_variants: same list including out-of-stock
+           - matched_size_in_stock / matched_label: reflecting the user's size+width
+             filter if one was supplied
+      4. If the user supplied size or width filters, drop groups where their
+         size/width combo isn't in stock.
+      5. Optionally drop groups whose category isn't footwear (default on).
+    """
+    # Copy-minus sizes/widths so we can attach full variant context.
+    unrestricted = FilterSpec(**{
+        **f.model_dump(),
+        "sizes_us": [],
+        "widths": [],
+    })
+    raw = search(unrestricted, limit=limit * 12)  # headroom for grouping
+
+    groups: dict[tuple, dict] = {}
+    for p in raw:
+        key = (p.get("retailer_id"), p.get("url"))
+        g = groups.get(key)
+        if g is None:
+            g = {
+                **{k: p.get(k) for k in (
+                    "retailer_id", "url", "image_url", "title_raw",
+                    "last_name", "leather_name", "color", "category",
+                    "model_number", "currency", "source_type", "on_sale",
+                    "first_seen_at", "last_seen_at", "last_checked_at",
+                )},
+                "_retailer": p.get("_retailer", {}),
+                "variants": [],
+                "price_min_minor": None,
+                "price_max_minor": None,
+            }
+            groups[key] = g
+        variant = {
+            "retailer_sku": p.get("retailer_sku"),
+            "size_us": p.get("size_us"),
+            "width": p.get("width"),
+            "stock_state": p.get("stock_state"),
+            "price_minor": p.get("price_minor"),
+        }
+        g["variants"].append(variant)
+        pm = p.get("price_minor")
+        if pm is not None:
+            g["price_min_minor"] = min(g["price_min_minor"], pm) if g["price_min_minor"] is not None else pm
+            g["price_max_minor"] = max(g["price_max_minor"], pm) if g["price_max_minor"] is not None else pm
+
+    wanted_sizes = set(f.sizes_us)
+    wanted_widths = {w.upper() for w in f.widths}
+
+    out: list[dict] = []
+    for g in groups.values():
+        if footwear_only and (g.get("category") or "other") not in _FOOTWEAR_CATEGORIES:
+            continue
+
+        in_stock = [v for v in g["variants"] if v.get("stock_state") == "in_stock"]
+        g["sizes_available"] = sorted(
+            {_variant_label(v["size_us"], v["width"]) for v in in_stock if v.get("size_us")}
+        )
+        g["n_sizes_in_stock"] = len(g["sizes_available"])
+        g["n_variants"] = len(g["variants"])
+
+        matched: list[str] = []
+        for v in in_stock:
+            s_ok = (not wanted_sizes) or (v.get("size_us") in wanted_sizes)
+            w_ok = (not wanted_widths) or ((v.get("width") or "").upper() in wanted_widths)
+            if s_ok and w_ok:
+                matched.append(_variant_label(v["size_us"], v["width"]))
+
+        # If the user asked for specific sizes/widths, hide listings that
+        # don't have that combo in stock.
+        if wanted_sizes or wanted_widths:
+            if not matched:
+                continue
+            g["matched_label"] = ", ".join(sorted(set(matched)))
+            g["matched_in_stock"] = True
+        else:
+            g["matched_label"] = ""
+            g["matched_in_stock"] = None
+
+        # Representative price = min variant price.
+        g["price_minor"] = g["price_min_minor"]
+        out.append(g)
+
+    # Sorting (reuse semantics of `search`).
+    if f.sort == "price_asc":
+        out.sort(key=lambda g: g.get("price_minor") or 0)
+    elif f.sort == "price_desc":
+        out.sort(key=lambda g: -(g.get("price_minor") or 0))
+    elif f.sort == "retailer":
+        out.sort(key=lambda g: (g["_retailer"].get("name") or "").lower())
+    else:
+        out.sort(key=lambda g: g.get("last_seen_at") or "", reverse=True)
+
+    return out[:limit]
+
+
+# ---------------------------------------------------------------------------
 # Home-page modules
 # ---------------------------------------------------------------------------
 
@@ -365,7 +491,7 @@ def _attach_retailers(rows: list[dict]) -> list[dict]:
     return rows
 
 
-def get_new_arrivals(days: int = 7, limit: int = 12) -> list[dict]:
+def get_new_arrivals(days: int = 7, limit: int = 12, footwear_only: bool = True) -> list[dict]:
     """Products whose first_seen_at falls within the last `days` days."""
     cutoff = datetime.now(UTC) - timedelta(days=days)
     client = _client()
@@ -382,16 +508,27 @@ def get_new_arrivals(days: int = 7, limit: int = 12) -> list[dict]:
             .gte("first_seen_at", cutoff.isoformat())
             .neq("stock_state", "out_of_stock")
             .order("first_seen_at", desc=True)
-            .limit(limit)
+            .limit(limit * 6)
             .execute()
             .data
             or []
         )
-    rows.sort(key=lambda p: p.get("first_seen_at") or p.get("last_seen_at") or "", reverse=True)
-    return _attach_retailers(rows[:limit])
+    if footwear_only:
+        rows = [r for r in rows if (r.get("category") or "other") in _FOOTWEAR_CATEGORIES]
+    # Dedupe by (retailer_id, url) so we don't show four variants of the same shoe.
+    seen: set[tuple] = set()
+    unique: list[dict] = []
+    for r in rows:
+        key = (r.get("retailer_id"), r.get("url"))
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(r)
+    unique.sort(key=lambda p: p.get("first_seen_at") or p.get("last_seen_at") or "", reverse=True)
+    return _attach_retailers(unique[:limit])
 
 
-def get_just_sold_out(hours: int = 48, limit: int = 8) -> list[dict]:
+def get_just_sold_out(hours: int = 48, limit: int = 8, footwear_only: bool = True) -> list[dict]:
     """Products that flipped to out_of_stock in the last `hours` hours."""
     cutoff = datetime.now(UTC) - timedelta(hours=hours)
     client = _client()
@@ -408,12 +545,23 @@ def get_just_sold_out(hours: int = 48, limit: int = 8) -> list[dict]:
             .eq("stock_state", "out_of_stock")
             .gte("last_checked_at", cutoff.isoformat())
             .order("last_checked_at", desc=True)
-            .limit(limit)
+            .limit(limit * 6)
             .execute()
             .data
             or []
         )
-    return _attach_retailers(rows[:limit])
+    if footwear_only:
+        rows = [r for r in rows if (r.get("category") or "other") in _FOOTWEAR_CATEGORIES]
+    # Dedupe by URL.
+    seen: set[tuple] = set()
+    unique: list[dict] = []
+    for r in rows:
+        key = (r.get("retailer_id"), r.get("url"))
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(r)
+    return _attach_retailers(unique[:limit])
 
 
 # ---------------------------------------------------------------------------

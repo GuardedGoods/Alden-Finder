@@ -51,6 +51,8 @@ def _write_qp(spec: FilterSpec) -> None:
         qp["model"] = spec.model_number
     if spec.on_sale:
         qp["sale"] = "1"
+    if spec.retailer_ids:
+        qp["retailer"] = ",".join(str(rid) for rid in spec.retailer_ids)
     if spec.display_currency != "USD":
         qp["ccy"] = spec.display_currency
     if spec.q:
@@ -115,6 +117,19 @@ def render() -> FilterSpec:
         st.markdown("### Geography")
         sel_countries = st.multiselect("Country", countries, default=_qp_list("country"))
 
+        st.markdown("### Retailer")
+        retailer_options = [(r["id"], r["name"]) for r in retailers]
+        qp_ret_ids = {int(x) for x in _qp_list("retailer") if x.isdigit()}
+        default_ret = [(rid, name) for rid, name in retailer_options if rid in qp_ret_ids]
+        sel_retailers = st.multiselect(
+            "Filter by retailer",
+            retailer_options,
+            default=default_ret,
+            format_func=lambda t: t[1],
+            placeholder="All retailers",
+        )
+        sel_retailer_ids = [rid for rid, _ in sel_retailers]
+
         st.markdown("### Display")
         ccy = st.selectbox(
             "Show prices in",
@@ -147,6 +162,7 @@ def render() -> FilterSpec:
         countries=sel_countries,
         source_types=sel_sources,
         stock_states=sel_stock,
+        retailer_ids=sel_retailer_ids,
         model_number=model or None,
         on_sale=on_sale,
         display_currency=ccy,

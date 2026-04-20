@@ -82,7 +82,7 @@ authorization can change at any time; the official Alden dealer list at
 else:
     spec = filters.render()
     home.render_new_arrivals(display_ccy=spec.display_currency, limit=6)
-    products = db.search(spec, limit=240)
+    products = db.search_grouped(spec, limit=120)
     st.markdown(f"**{len(products)}** matching listings")
     cards.render_grid(products, display_ccy=spec.display_currency, cols=3)
     alerts.render(spec)

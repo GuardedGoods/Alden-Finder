@@ -48,6 +48,21 @@ CSS = """
   color: var(--af-accent);
 }
 .af-card .af-retailer { font-size: 0.8rem; opacity: 0.75; margin-top: 4px; }
+.af-card .af-size-hit {
+  margin-top: 8px;
+  font-size: 0.88rem;
+  padding: 6px 10px;
+  background: rgba(42, 122, 61, 0.14);
+  color: #1f5f2c;
+  border-radius: 6px;
+  border-left: 3px solid #2a7a3d;
+}
+.af-card .af-size-list {
+  margin-top: 8px;
+  font-size: 0.82rem;
+  opacity: 0.85;
+  line-height: 1.4;
+}
 .af-card a.af-buy {
   display: inline-block;
   margin-top: auto;
